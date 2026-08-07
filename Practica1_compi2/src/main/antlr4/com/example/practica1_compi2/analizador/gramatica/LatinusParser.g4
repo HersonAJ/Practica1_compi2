@@ -44,7 +44,8 @@ tipo
     ;
 
 arreglo
-    : SERIES ID CORCH_A INT CORCH_C DOSPUNTOS tipo (LLAVE_A listaExpr LLAVE_C)? PUNTOCOMA
+    : SERIES ID CORCH_A INT CORCH_C DOSPUNTOS tipo (LLAVE_A listaExpr LLAVE_C)? PUNTOCOMA  # arregloTipado
+    | SERIES ID CORCH_A INT CORCH_C DOSPUNTOS LLAVE_A listaExpr LLAVE_C PUNTOCOMA          # arregloBooleano
     ;
 
 listaExpr
@@ -113,6 +114,7 @@ asignacion
     : referencia ASIGNAR expr PUNTOCOMA
     ;
 
+// Caso especial: asignar un literal de struct anónimo a un atributo/elemento
 // existente (ej. mi_selva.animales[1] = { nombre: "Perro", apodo: "Canis" })
 // termina en '}', no lleva ';'
 asignacionStructLiteral
@@ -124,10 +126,22 @@ referencia
     ;
 
 condicional
-    : SI PAR_A expr PAR_C LLAVE_A sentencia* LLAVE_C
-      (ALITER PAR_A expr PAR_C LLAVE_A sentencia* LLAVE_C)*
-      (ALITER LLAVE_A sentencia* LLAVE_C)?
+    : SI PAR_A expr PAR_C bloqueSentencias
+      ramaAliter*
+      ramaElse?
       FINIS PUNTOCOMA
+    ;
+
+bloqueSentencias
+    : LLAVE_A sentencia* LLAVE_C
+    ;
+
+ramaAliter
+    : ALITER PAR_A expr PAR_C bloqueSentencias
+    ;
+
+ramaElse
+    : ALITER bloqueSentencias
     ;
 
 cicloDum
@@ -172,7 +186,8 @@ listaArgumentos
     ;
 
 // ===== Expresiones =====
-// Orden de alternativas = precedencia (primero = mas fuerte).
+// Orden de alternativas = precedencia (primero = más fuerte).
+// ANTLR4 resuelve la recursión izquierda automáticamente con este orden.
 
 expr
     : PAR_A expr PAR_C                                # exprParentesis
