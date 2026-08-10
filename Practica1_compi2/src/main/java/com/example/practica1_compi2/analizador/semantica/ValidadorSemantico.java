@@ -52,6 +52,12 @@ public class ValidadorSemantico {
         if (sentencia instanceof NodoSentencia.InstanciaStruct) {
             validadorEstructuras.validar(sentencia);
         }
+        // Validar expresión de inicialización en declaraciones de variable
+        if (sentencia instanceof NodoSentencia.DeclaracionVariable varDecl) {
+            if (varDecl.valorInicial() != null) {
+                validarExpresion(varDecl.valorInicial());
+            }
+        }
     }
 
     private void validarFuncion(NodoFuncion funcion) {
@@ -145,7 +151,15 @@ public class ValidadorSemantico {
         validarExpresion(asignacion.valor());
         String tipoRef = validadorTipos.inferirTipo(asignacion.referencia());
         String tipoVal = validadorTipos.inferirTipo(asignacion.valor());
-        // Verificar compatibilidad (asignación de menor jerarquía a mayor)
+
+        // Verificar compatibilidad
+        if (!"desconocido".equals(tipoRef) && !"desconocido".equals(tipoVal)
+                && !"struct".equals(tipoRef) && !"struct".equals(tipoVal)) {
+            if (!validadorTipos.sonCompatibles(tipoVal, tipoRef)) {
+                errores.add(new ErrorSemantico(asignacion.linea(),
+                        "Tipo incompatible en asignación: " + tipoVal + " no es compatible con " + tipoRef));
+            }
+        }
     }
 
     private void validarAsignacionStructLiteral(NodoSentencia.AsignacionStructLiteral asignacion) {
@@ -227,6 +241,7 @@ public class ValidadorSemantico {
     }
 
     private void validarExpresion(NodoExpr expr) {
+        System.out.println("🔍 validarExpresion: " + expr.getClass().getSimpleName());
         // Validar alcance
         validadorAlcance.validar(expr);
         // Validar tipos

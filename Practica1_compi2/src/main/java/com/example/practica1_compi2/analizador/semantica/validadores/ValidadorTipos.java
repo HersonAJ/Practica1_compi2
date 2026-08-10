@@ -124,12 +124,15 @@ public class ValidadorTipos {
     }
 
     private String inferirLlamadaFuncion(NodoExpr.LlamadaFuncion llamada) {
+        System.out.println("🔍 Buscando función: " + llamada.nombre());
         var opt = tabla.buscarFuncion(llamada.nombre());
         if (opt.isEmpty()) {
+            System.out.println("❌ Función NO encontrada: " + llamada.nombre());
             errores.add(new ErrorSemantico(llamada.linea(),
                     "Función no declarada: " + llamada.nombre()));
             return "desconocido";
         }
+        System.out.println("✅ Función encontrada: " + llamada.nombre());
         var func = opt.get();
         var params = func.tipoParametros();
         var args = llamada.argumentos();
@@ -153,11 +156,17 @@ public class ValidadorTipos {
         return func.tipoRetorno();
     }
 
-    private boolean sonCompatibles(String tipo1, String tipo2) {
-        if (tipo1.equals(tipo2)) return true;
-        // Regla de jerarquía para asignación: tipo1 debe ser subtipo de tipo2
-        int nivel1 = JERARQUIA.getOrDefault(tipo1, 0);
-        int nivel2 = JERARQUIA.getOrDefault(tipo2, 0);
-        return nivel1 <= nivel2; // El tipo de menor jerarquía puede asignarse al de mayor
+    public boolean sonCompatibles(String tipoOrigen, String tipoDestino) {
+        if (tipoOrigen.equals(tipoDestino)) return true;
+
+        // textum solo es compatible consigo mismo como destino
+        if ("textum".equals(tipoDestino)) {
+            return false;
+        }
+
+        int nivelOrigen = JERARQUIA.getOrDefault(tipoOrigen, 0);
+        int nivelDestino = JERARQUIA.getOrDefault(tipoDestino, 0);
+
+        return nivelOrigen > 0 && nivelDestino > 0 && nivelOrigen <= nivelDestino;
     }
 }

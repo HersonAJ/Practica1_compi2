@@ -25,6 +25,7 @@ public class TestValidadorSemantico {
         testFuncionSinRetornoConReturn();
         testIndiceArregloNoNumerico();
         testArregloYaDeclarado();
+        testEjemploCompleto();
     }
 
     private static void testVariableNoDeclarada() {
@@ -192,6 +193,50 @@ public class TestValidadorSemantico {
                 numeros["tres"] = 10;
                 FINIS;
                 """;
+        ejecutarPrueba(codigo);
+    }
+
+    private static void testEjemploCompleto() {
+        System.out.println("\n=== 16. Ejemplo completo del PDF ===");
+        String codigo = """
+            VARIABILES>
+            esto edad : numerus 20;
+            esto cifrado : falsus;
+            esto comandante : textum "Estudiante X";
+            esto fuerza : numerus 10;
+            esto poder : numerus 0;
+
+            MUNERA>
+            ratio numerus calcularPoder(esto fuerza : numerus) {
+                VARIABILES[
+                    esto total : numerus fuerza * 2;
+                ]
+                reddere total;
+            } finis;
+
+            MAIOR>
+            >> "Hola comandante!" ;
+            >> "Ingresa tu nombre por favor" ;
+            comandante <<
+            >> "Bienvenido" >> comandante ;
+            >> "Ingresa tu edad" ;
+            edad <<
+
+            si (edad >= 18) {
+                cifrado = verum;
+                fuerza = 12;
+            } finis ;
+
+            >> "Tu poder es: " >>  calcularPoder(fuerza);
+            >> "La puerta esta cifrada?" >> cifrado ;
+
+            FINIS;
+            """;
+        /* preguntar si es correcto
+        >> "Tu poder es: " >>  calcularPoder(fuerza);
+        o
+        >> "Tu poder es: >> "  calcularPoder(fuerza);
+         */
         ejecutarPrueba(codigo);
     }
 
