@@ -187,11 +187,20 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         int linea = linea(ctx);
         NodoExpr actual = new NodoExpr.Identificador(linea, ctx.ID(0).getText());
 
-        for (int i = 1; i < ctx.ID().size(); i++) {
-            actual = new NodoExpr.AccesoAtributo(linea, actual, ctx.ID(i).getText());
-        }
-        if (ctx.expr() != null) {
-            actual = new NodoExpr.AccesoArray(linea, actual, (NodoExpr) visit(ctx.expr()));
+        int idIndex = 1;
+        for (int i = 1; i < ctx.getChildCount(); i++) {
+            org.antlr.v4.runtime.tree.ParseTree child = ctx.getChild(i);
+            if (child instanceof org.antlr.v4.runtime.tree.TerminalNode) {
+                org.antlr.v4.runtime.tree.TerminalNode token = (org.antlr.v4.runtime.tree.TerminalNode) child;
+                if (token.getSymbol().getType() == LatinusParser.PUNTO) {
+                    // Siguiente token es un ID
+                    org.antlr.v4.runtime.tree.TerminalNode idToken = (org.antlr.v4.runtime.tree.TerminalNode) ctx.getChild(++i);
+                    actual = new NodoExpr.AccesoAtributo(linea, actual, idToken.getText());
+                }
+            } else if (child instanceof LatinusParser.ExprContext) {
+                NodoExpr indice = (NodoExpr) visit(child);
+                actual = new NodoExpr.AccesoArray(linea, actual, indice);
+            }
         }
         return actual;
     }
@@ -238,16 +247,18 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
                 linea(ctx), inicializacion, condicion, incremento, construirCuerpo(ctx.sentencia()));
     }
 
-    // incremento: ID (INC|DEC) | referencia ASIGNAR expr
-    // El caso 'ID++' / 'ID--' se desazucara a una asignación: ID = ID + 1
+    // incremento: referencia (INC | DEC) | referencia ASIGNAR expr
     private NodoSentencia construirIncremento(LatinusParser.IncrementoContext ctx) {
         int linea = linea(ctx);
-        if (ctx.ID() != null) {
+        // Caso: referencia++ o referencia--
+        if (ctx.INC() != null || ctx.DEC() != null) {
+            NodoExpr referencia = construirReferencia(ctx.referencia());
             String operador = ctx.INC() != null ? "+" : "-";
-            NodoExpr id = new NodoExpr.Identificador(linea, ctx.ID().getText());
-            NodoExpr suma = new NodoExpr.Binaria(linea, operador, id, new NodoExpr.LiteralEntero(linea, 1));
-            return new NodoSentencia.Asignacion(linea, id, suma);
+            NodoExpr uno = new NodoExpr.LiteralEntero(linea, 1);
+            NodoExpr suma = new NodoExpr.Binaria(linea, operador, referencia, uno);
+            return new NodoSentencia.Asignacion(linea, referencia, suma);
         }
+        // Caso: referencia = expr
         NodoExpr referencia = construirReferencia(ctx.referencia());
         NodoExpr valor = (NodoExpr) visit(ctx.expr());
         return new NodoSentencia.Asignacion(linea, referencia, valor);

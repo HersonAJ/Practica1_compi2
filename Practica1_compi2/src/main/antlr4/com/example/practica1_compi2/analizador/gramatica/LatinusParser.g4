@@ -108,6 +108,11 @@ sentencia
     | escritura
     | interrupcionCiclo
     | llamadaFuncion PUNTOCOMA
+    | incrementoDecremento
+    ;
+
+incrementoDecremento
+    : (referencia (INC | DEC) | (INC | DEC) referencia) PUNTOCOMA
     ;
 
 asignacion
@@ -122,7 +127,7 @@ asignacionStructLiteral
     ;
 
 referencia
-    : ID (PUNTO ID)* (CORCH_A expr CORCH_C)?
+    : ID (PUNTO ID | CORCH_A expr CORCH_C)*
     ;
 
 condicional
@@ -157,7 +162,7 @@ cicloPer
     ;
 
 incremento
-    : ID (INC | DEC)
+    : referencia (INC | DEC)
     | referencia ASIGNAR expr
     ;
 
