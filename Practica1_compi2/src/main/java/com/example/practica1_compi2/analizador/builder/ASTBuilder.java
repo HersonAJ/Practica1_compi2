@@ -169,40 +169,34 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitAsignacion(LatinusParser.AsignacionContext ctx) {
-        NodoExpr referencia = construirReferencia(ctx.referencia());
+        NodoExpr referencia = (NodoExpr) visit(ctx.referencia());
         NodoExpr valor = (NodoExpr) visit(ctx.expr());
         return new NodoSentencia.Asignacion(linea(ctx), referencia, valor);
     }
 
     @Override
     public NodoAST visitAsignacionStructLiteral(LatinusParser.AsignacionStructLiteralContext ctx) {
-        NodoExpr referencia = construirReferencia(ctx.referencia());
+        NodoExpr referencia = (NodoExpr) visit(ctx.referencia());
         NodoExpr.LiteralStruct valor =
                 new NodoExpr.LiteralStruct(linea(ctx), construirMapaCampos(ctx.literalStruct()));
         return new NodoSentencia.AsignacionStructLiteral(linea(ctx), referencia, valor);
     }
 
-    // referencia: ID ('.' ID)* ('[' expr ']')?
-    private NodoExpr construirReferencia(LatinusParser.ReferenciaContext ctx) {
-        int linea = linea(ctx);
-        NodoExpr actual = new NodoExpr.Identificador(linea, ctx.ID(0).getText());
+    @Override
+    public NodoAST visitReferenciaBase(LatinusParser.ReferenciaBaseContext ctx) {
+        return new NodoExpr.Identificador(linea(ctx), ctx.ID().getText());
+    }
 
-        int idIndex = 1;
-        for (int i = 1; i < ctx.getChildCount(); i++) {
-            org.antlr.v4.runtime.tree.ParseTree child = ctx.getChild(i);
-            if (child instanceof org.antlr.v4.runtime.tree.TerminalNode) {
-                org.antlr.v4.runtime.tree.TerminalNode token = (org.antlr.v4.runtime.tree.TerminalNode) child;
-                if (token.getSymbol().getType() == LatinusParser.PUNTO) {
-                    // Siguiente token es un ID
-                    org.antlr.v4.runtime.tree.TerminalNode idToken = (org.antlr.v4.runtime.tree.TerminalNode) ctx.getChild(++i);
-                    actual = new NodoExpr.AccesoAtributo(linea, actual, idToken.getText());
-                }
-            } else if (child instanceof LatinusParser.ExprContext) {
-                NodoExpr indice = (NodoExpr) visit(child);
-                actual = new NodoExpr.AccesoArray(linea, actual, indice);
-            }
-        }
-        return actual;
+    @Override
+    public NodoAST visitAccesoAtributo(LatinusParser.AccesoAtributoContext ctx) {
+        NodoExpr base = (NodoExpr) visit(ctx.referencia());
+        return new NodoExpr.AccesoAtributo(linea(ctx), base, ctx.ID().getText());
+    }
+
+    @Override
+    public NodoAST visitAccesoArray(LatinusParser.AccesoArrayContext ctx) {
+        NodoExpr base = (NodoExpr) visit(ctx.referencia());
+        return new NodoExpr.AccesoArray(linea(ctx), base, (NodoExpr) visit(ctx.expr()));
     }
 
     @Override
@@ -252,14 +246,14 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         int linea = linea(ctx);
         // Caso: referencia++ o referencia--
         if (ctx.INC() != null || ctx.DEC() != null) {
-            NodoExpr referencia = construirReferencia(ctx.referencia());
+            NodoExpr referencia = (NodoExpr) visit(ctx.referencia());
             String operador = ctx.INC() != null ? "+" : "-";
             NodoExpr uno = new NodoExpr.LiteralEntero(linea, 1);
             NodoExpr suma = new NodoExpr.Binaria(linea, operador, referencia, uno);
             return new NodoSentencia.Asignacion(linea, referencia, suma);
         }
         // Caso: referencia = expr
-        NodoExpr referencia = construirReferencia(ctx.referencia());
+        NodoExpr referencia = (NodoExpr) visit(ctx.referencia());
         NodoExpr valor = (NodoExpr) visit(ctx.expr());
         return new NodoSentencia.Asignacion(linea, referencia, valor);
     }
@@ -369,7 +363,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitExprReferencia(LatinusParser.ExprReferenciaContext ctx) {
-        return construirReferencia(ctx.referencia());
+        return visit(ctx.referencia());
     }
 
     @Override

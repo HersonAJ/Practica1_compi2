@@ -1,5 +1,6 @@
 package com.example.practica1_compi2.analizador.builder;
 
+import com.example.practica1_compi2.analizador.ast.NodoExpr;
 import com.example.practica1_compi2.analizador.ast.NodoPrograma;
 import com.example.practica1_compi2.analizador.ast.NodoSentencia;
 import com.example.practica1_compi2.analizador.gramatica.LatinusLexer;
@@ -141,4 +142,31 @@ class ASTBuilderTest {
         // i++ debe llegar como Asignacion(i, Binaria("+", i, 1)), no como un nodo especial
         assertEquals(NodoSentencia.Asignacion.class, ciclo.incremento().getClass());
     }
+    @Test
+    void referenciaEncadenadaMezclaAtributoYArreglo() {
+        String codigo = """
+            MAIOR>
+            a.b[1].c = 5;
+            FINIS;
+            """;
+
+        NodoPrograma programa = parsear(codigo);
+        var asignacion = (NodoSentencia.Asignacion) programa.main().get(0);
+
+        // Esperado: AccesoAtributo( AccesoArray( AccesoAtributo(Identificador(a), "b"), 1 ), "c" )
+        assertEquals(NodoExpr.AccesoAtributo.class, asignacion.referencia().getClass());
+        var nivel1 = (NodoExpr.AccesoAtributo) asignacion.referencia();
+        assertEquals("c", nivel1.atributo());
+
+        assertEquals(NodoExpr.AccesoArray.class, nivel1.objeto().getClass());
+        var nivel2 = (NodoExpr.AccesoArray) nivel1.objeto();
+
+        assertEquals(NodoExpr.AccesoAtributo.class, nivel2.arreglo().getClass());
+        var nivel3 = (NodoExpr.AccesoAtributo) nivel2.arreglo();
+        assertEquals("b", nivel3.atributo());
+
+        assertEquals(NodoExpr.Identificador.class, nivel3.objeto().getClass());
+        assertEquals("a", ((NodoExpr.Identificador) nivel3.objeto()).nombre());
+    }
+
 }

@@ -6,6 +6,8 @@ import com.example.practica1_compi2.analizador.ast.NodoPrograma;
 import com.example.practica1_compi2.analizador.ast.NodoSentencia;
 import com.example.practica1_compi2.analizador.semantica.errores.ErrorSemantico;
 import com.example.practica1_compi2.analizador.semantica.validadores.*;
+import com.example.practica1_compi2.analizador.ast.nodo.TipoNodoExpr;
+import com.example.practica1_compi2.analizador.ast.nodo.TipoNodoSentencia;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,11 +51,13 @@ public class ValidadorSemantico {
 
     private void validarDeclaracion(NodoSentencia sentencia) {
         validadorDeclaraciones.validar(sentencia);
-        if (sentencia instanceof NodoSentencia.InstanciaStruct) {
+
+        if (sentencia.tipoNodo() == TipoNodoSentencia.INSTANCIA_STRUCT) {
             validadorEstructuras.validar(sentencia);
         }
-        // Validar expresión de inicialización en declaraciones de variable
-        if (sentencia instanceof NodoSentencia.DeclaracionVariable varDecl) {
+        if (sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_VARIABLE) {
+            NodoSentencia.DeclaracionVariable varDecl = (NodoSentencia.DeclaracionVariable) sentencia;
+
             if (varDecl.valorInicial() != null) {
                 validarExpresion(varDecl.valorInicial());
             }
@@ -111,10 +115,10 @@ public class ValidadorSemantico {
 
     private void validarSentencia(NodoSentencia sentencia) {
         // 1. Validar declaraciones
-        if (sentencia instanceof NodoSentencia.DeclaracionVariable ||
-                sentencia instanceof NodoSentencia.DeclaracionArreglo ||
-                sentencia instanceof NodoSentencia.DefinicionStruct ||
-                sentencia instanceof NodoSentencia.InstanciaStruct) {
+        if (sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_VARIABLE ||
+        sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_ARREGLO ||
+        sentencia.tipoNodo() == TipoNodoSentencia.DEFINICION_STRUCT ||
+        sentencia.tipoNodo() == TipoNodoSentencia.INSTANCIA_STRUCT) {
             validarDeclaracion(sentencia);
             return;
         }
@@ -123,25 +127,26 @@ public class ValidadorSemantico {
         validadorFlujo.validar(sentencia);
 
         // 3. Validar expresiones (alcance y tipos)
-        if (sentencia instanceof NodoSentencia.Asignacion asignacion) {
-            validarAsignacion(asignacion);
-        } else if (sentencia instanceof NodoSentencia.AsignacionStructLiteral asignacionStruct) {
-            validarAsignacionStructLiteral(asignacionStruct);
-        } else if (sentencia instanceof NodoSentencia.Escritura escritura) {
-            validarEscritura(escritura);
-        } else if (sentencia instanceof NodoSentencia.Lectura lectura) {
-            validarLectura(lectura);
-        } else if (sentencia instanceof NodoSentencia.Retorno retorno) {
-            validarRetorno(retorno);
-        } else if (sentencia instanceof NodoSentencia.CicloDum ciclo) {
-            validarCicloDum(ciclo);
-        } else if (sentencia instanceof NodoSentencia.CicloFacere ciclo) {
-            validarCicloFacere(ciclo);
-        } else if (sentencia instanceof NodoSentencia.CicloPer ciclo) {
-            validarCicloPer(ciclo);
-        } else if (sentencia instanceof NodoSentencia.Condicional condicional) {
-            validarCondicional(condicional);
-        } else if (sentencia instanceof NodoSentencia.LlamadaFuncionSentencia llamada) {
+        if (sentencia.tipoNodo() == TipoNodoSentencia.ASIGNACION) {
+            validarAsignacion((NodoSentencia.Asignacion) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.ASIGNACION_STRUCT_LITERAL) {
+            validarAsignacionStructLiteral((NodoSentencia.AsignacionStructLiteral) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.ESCRITURA) {
+            validarEscritura((NodoSentencia.Escritura) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.LECTURA) {
+            validarLectura((NodoSentencia.Lectura) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.RETORNO) {
+            validarRetorno((NodoSentencia.Retorno) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.CICLO_DUM) {
+            validarCicloDum((NodoSentencia.CicloDum) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.CICLO_FACERE)  {
+            validarCicloFacere((NodoSentencia.CicloFacere) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.CICLO_PER) {
+            validarCicloPer((NodoSentencia.CicloPer) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.CONDICIONAL) {
+            validarCondicional((NodoSentencia.Condicional) sentencia);
+        }else if (sentencia.tipoNodo() == TipoNodoSentencia.LLAMADA_FUNCION_SENTENCIA) {
+            NodoSentencia.LlamadaFuncionSentencia llamada = (NodoSentencia.LlamadaFuncionSentencia) sentencia;
             validarLlamadaFuncion(llamada.llamada());
         }
     }
@@ -241,28 +246,37 @@ public class ValidadorSemantico {
     }
 
     private void validarExpresion(NodoExpr expr) {
-        System.out.println("🔍 validarExpresion: " + expr.getClass().getSimpleName());
-        // Validar alcance
+        System.out.println("ValidarExpresion: " + expr.getClass().getSimpleName());
+
+        //validar alcance
         validadorAlcance.validar(expr);
-        // Validar tipos
+        //validar tipos
         validadorTipos.inferirTipo(expr);
-        // Validar acceso a structs
-        if (expr instanceof NodoExpr.AccesoAtributo acceso) {
+        //validar acceso a struct
+        if (expr.tipoNodo() == TipoNodoExpr.ACCESO_ATRIBUTO) {
+            NodoExpr.AccesoAtributo acceso = (NodoExpr.AccesoAtributo) expr;
             validadorEstructuras.validarAccesoAtributo(acceso);
         }
-        // Recursivamente validar subexpresiones
-        if (expr instanceof NodoExpr.Binaria bin) {
+
+        //recursivamente validar subexpresiones
+        if (expr.tipoNodo() == TipoNodoExpr.BINARIA) {
+            NodoExpr.Binaria bin = (NodoExpr.Binaria) expr;
             validarExpresion(bin.izquierda());
             validarExpresion(bin.derecha());
-        } else if (expr instanceof NodoExpr.Unaria unaria) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.UNARIA) {
+            NodoExpr.Unaria unaria = (NodoExpr.Unaria) expr;
             validarExpresion(unaria.operando());
-        } else if (expr instanceof NodoExpr.AccesoArray acceso) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.ACCESO_ARRAY) {
+            NodoExpr.AccesoArray acceso = (NodoExpr.AccesoArray) expr;
             validarExpresion(acceso.arreglo());
             validarExpresion(acceso.indice());
-        } else if (expr instanceof NodoExpr.AccesoAtributo acceso) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.ACCESO_ATRIBUTO) {
+            NodoExpr.AccesoAtributo acceso = (NodoExpr.AccesoAtributo) expr;
             validarExpresion(acceso.objeto());
-        } else if (expr instanceof NodoExpr.LlamadaFuncion llamada) {
-            for (NodoExpr arg : llamada.argumentos()) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.LLAMADA_FUNCION) {
+            NodoExpr.LlamadaFuncion llamada = (NodoExpr.LlamadaFuncion) expr;
+
+            for(NodoExpr arg : llamada.argumentos()) {
                 validarExpresion(arg);
             }
         }

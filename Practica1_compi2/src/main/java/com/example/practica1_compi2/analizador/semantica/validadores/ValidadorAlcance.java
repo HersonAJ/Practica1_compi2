@@ -3,6 +3,7 @@ package com.example.practica1_compi2.analizador.semantica.validadores;
 import com.example.practica1_compi2.analizador.ast.NodoExpr;
 import com.example.practica1_compi2.analizador.semantica.TablaSimbolos;
 import com.example.practica1_compi2.analizador.semantica.errores.ErrorSemantico;
+import com.example.practica1_compi2.analizador.ast.nodo.TipoNodoExpr;
 
 import java.util.List;
 
@@ -17,19 +18,49 @@ public class ValidadorAlcance {
     }
 
     public void validar(NodoExpr expresion) {
-        if (expresion instanceof NodoExpr.Identificador id) {
+
+        if (expresion.tipoNodo() == TipoNodoExpr.IDENTIFICADOR) {
+
+            NodoExpr.Identificador id =
+                    (NodoExpr.Identificador) expresion;
+
             validarIdentificador(id);
-        } else if (expresion instanceof NodoExpr.AccesoArray acceso) {
+
+        } else if (expresion.tipoNodo() == TipoNodoExpr.ACCESO_ARRAY) {
+
+            NodoExpr.AccesoArray acceso =
+                    (NodoExpr.AccesoArray) expresion;
+
             validar(acceso.arreglo());
             validar(acceso.indice());
-        } else if (expresion instanceof NodoExpr.AccesoAtributo acceso) {
+
+        } else if (expresion.tipoNodo() == TipoNodoExpr.ACCESO_ATRIBUTO) {
+
+            NodoExpr.AccesoAtributo acceso =
+                    (NodoExpr.AccesoAtributo) expresion;
+
             validar(acceso.objeto());
-        } else if (expresion instanceof NodoExpr.Binaria bin) {
+
+        } else if (expresion.tipoNodo() == TipoNodoExpr.BINARIA) {
+
+            NodoExpr.Binaria bin =
+                    (NodoExpr.Binaria) expresion;
+
             validar(bin.izquierda());
             validar(bin.derecha());
-        } else if (expresion instanceof NodoExpr.Unaria unaria) {
+
+        } else if (expresion.tipoNodo() == TipoNodoExpr.UNARIA) {
+
+            NodoExpr.Unaria unaria =
+                    (NodoExpr.Unaria) expresion;
+
             validar(unaria.operando());
-        } else if (expresion instanceof NodoExpr.LlamadaFuncion llamada) {
+
+        } else if (expresion.tipoNodo() == TipoNodoExpr.LLAMADA_FUNCION) {
+
+            NodoExpr.LlamadaFuncion llamada =
+                    (NodoExpr.LlamadaFuncion) expresion;
+
             for (NodoExpr arg : llamada.argumentos()) {
                 validar(arg);
             }

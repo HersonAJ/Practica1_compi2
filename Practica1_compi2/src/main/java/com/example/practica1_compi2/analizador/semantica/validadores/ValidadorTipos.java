@@ -3,6 +3,7 @@ package com.example.practica1_compi2.analizador.semantica.validadores;
 import com.example.practica1_compi2.analizador.ast.NodoExpr;
 import com.example.practica1_compi2.analizador.semantica.TablaSimbolos;
 import com.example.practica1_compi2.analizador.semantica.errores.ErrorSemantico;
+import com.example.practica1_compi2.analizador.ast.nodo.TipoNodoExpr;
 
 import java.util.List;
 import java.util.Map;
@@ -26,33 +27,39 @@ public class ValidadorTipos {
     }
 
     public String inferirTipo(NodoExpr expr) {
-        if (expr instanceof NodoExpr.LiteralEntero) {
+        if (expr.tipoNodo() == TipoNodoExpr.LITERAL_ENTERO) {
             return "numerus";
-        } else if (expr instanceof NodoExpr.LiteralDecimal) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.LITERAL_DECIMAL) {
             return "decimalis";
-        } else if (expr instanceof NodoExpr.LiteralTexto) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.LITERAL_TEXTO) {
             return "textum";
-        } else if (expr instanceof NodoExpr.LiteralCaracter) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.LITERAL_CARACTER) {
             return "littera";
-        } else if (expr instanceof NodoExpr.LiteralBooleano) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.LITERAL_BOOLEANO) {
             return "booleano";
-        } else if (expr instanceof NodoExpr.Identificador id) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.IDENTIFICADOR) {
+            NodoExpr.Identificador id = (NodoExpr.Identificador) expr;
             var opt = tabla.buscarVariable(id.nombre());
             if (opt.isEmpty()) {
                 return "desconocido";
             }
             return opt.get().tipo();
-        } else if (expr instanceof NodoExpr.Binaria bin) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.BINARIA) {
+            NodoExpr.Binaria bin = (NodoExpr.Binaria) expr;
             return inferirBinaria(bin);
-        } else if (expr instanceof NodoExpr.Unaria unaria) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.UNARIA) {
+            NodoExpr.Unaria unaria = (NodoExpr.Unaria) expr;
             return inferirUnaria(unaria);
-        } else if (expr instanceof NodoExpr.AccesoArray acceso) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.ACCESO_ARRAY) {
+            NodoExpr.AccesoArray acceso = (NodoExpr.AccesoArray) expr;
             return inferirAccesoArray(acceso);
-        } else if (expr instanceof NodoExpr.AccesoAtributo acceso) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.ACCESO_ATRIBUTO) {
+            NodoExpr.AccesoAtributo acceso = (NodoExpr.AccesoAtributo) expr;
             return inferirAccesoAtributo(acceso);
-        } else if (expr instanceof NodoExpr.LlamadaFuncion llamada) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.LLAMADA_FUNCION) {
+            NodoExpr.LlamadaFuncion llamada = (NodoExpr.LlamadaFuncion) expr;
             return inferirLlamadaFuncion(llamada);
-        } else if (expr instanceof NodoExpr.LiteralStruct) {
+        } else if (expr.tipoNodo() == TipoNodoExpr.LITERAL_STRUCT) {
             return "struct";
         } else {
             return "desconocido";

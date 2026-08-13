@@ -127,7 +127,9 @@ asignacionStructLiteral
     ;
 
 referencia
-    : ID (PUNTO ID | CORCH_A expr CORCH_C)*
+    : ID                                           # referenciaBase
+    | referencia PUNTO ID                          # accesoAtributo
+    | referencia CORCH_A expr CORCH_C              # accesoArray
     ;
 
 condicional
@@ -191,8 +193,6 @@ listaArgumentos
     ;
 
 // ===== Expresiones =====
-// Orden de alternativas = precedencia (primero = más fuerte).
-// ANTLR4 resuelve la recursión izquierda automáticamente con este orden.
 
 expr
     : PAR_A expr PAR_C                                # exprParentesis

@@ -4,6 +4,7 @@ import com.example.practica1_compi2.analizador.ast.NodoExpr;
 import com.example.practica1_compi2.analizador.ast.NodoSentencia;
 import com.example.practica1_compi2.analizador.semantica.TablaSimbolos;
 import com.example.practica1_compi2.analizador.semantica.errores.ErrorSemantico;
+import com.example.practica1_compi2.analizador.ast.nodo.TipoNodoSentencia;
 
 import java.util.List;
 import java.util.Map;
@@ -21,8 +22,8 @@ public class ValidadorEstructuras {
     }
 
     public void validar(NodoSentencia sentencia) {
-        if (sentencia instanceof NodoSentencia.InstanciaStruct instancia) {
-            validarInstanciaStruct(instancia);
+        if (sentencia.tipoNodo() == TipoNodoSentencia.INSTANCIA_STRUCT) {
+            validarInstanciaStruct((NodoSentencia.InstanciaStruct) sentencia);
         }
     }
 

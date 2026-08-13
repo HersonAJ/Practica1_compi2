@@ -2,6 +2,7 @@ package com.example.practica1_compi2.analizador.semantica.validadores;
 
 import com.example.practica1_compi2.analizador.ast.NodoSentencia;
 import com.example.practica1_compi2.analizador.semantica.errores.ErrorSemantico;
+import com.example.practica1_compi2.analizador.ast.nodo.TipoNodoSentencia;
 
 import java.util.List;
 
@@ -35,10 +36,10 @@ public class ValidadorFlujo {
     }
 
     public void validar(NodoSentencia sentencia) {
-        if (sentencia instanceof NodoSentencia.InterrupcionCiclo interrupcion) {
-            validarInterrupcion(interrupcion);
-        } else if (sentencia instanceof NodoSentencia.Retorno retorno) {
-            validarRetorno(retorno);
+        if (sentencia.tipoNodo() == TipoNodoSentencia.INTERRUPCION_CICLO){
+            validarInterrupcion((NodoSentencia.InterrupcionCiclo) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.RETORNO) {
+            validarRetorno((NodoSentencia.Retorno) sentencia);
         }
     }
 

@@ -3,6 +3,7 @@ package com.example.practica1_compi2.analizador.semantica.validadores;
 import com.example.practica1_compi2.analizador.ast.NodoSentencia;
 import com.example.practica1_compi2.analizador.semantica.TablaSimbolos;
 import com.example.practica1_compi2.analizador.semantica.errores.ErrorSemantico;
+import com.example.practica1_compi2.analizador.ast.nodo.TipoNodoSentencia;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,12 +20,12 @@ public class ValidadorDeclaraciones {
     }
 
     public void validar(NodoSentencia sentencia) {
-        if (sentencia instanceof NodoSentencia.DeclaracionVariable var) {
-            validarDeclaracionVariable(var);
-        } else if (sentencia instanceof NodoSentencia.DeclaracionArreglo arr) {
-            validarDeclaracionArreglo(arr);
-        } else if (sentencia instanceof NodoSentencia.DefinicionStruct struct) {
-            validarDefinicionStruct(struct);
+        if (sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_VARIABLE) {
+            validarDeclaracionVariable((NodoSentencia.DeclaracionVariable) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_ARREGLO) {
+            validarDeclaracionArreglo((NodoSentencia.DeclaracionArreglo) sentencia);
+        } else if (sentencia.tipoNodo() == TipoNodoSentencia.DEFINICION_STRUCT) {
+            validarDefinicionStruct((NodoSentencia.DefinicionStruct) sentencia);
         }
     }
 
