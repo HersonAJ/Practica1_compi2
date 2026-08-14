@@ -3,8 +3,12 @@ package com.example.practica1_compi2.analizador.semantica;
 import com.example.practica1_compi2.analizador.builder.ASTBuilder;
 import com.example.practica1_compi2.analizador.gramatica.LatinusLexer;
 import com.example.practica1_compi2.analizador.gramatica.LatinusParser;
+import com.example.practica1_compi2.color.ASTColor;
+import com.example.practica1_compi2.color.ColorMapa;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+
+import java.util.List;
 
 public class TestValidadorSemantico {
     public static void main(String[] args) {
@@ -259,19 +263,44 @@ public class TestValidadorSemantico {
             ASTBuilder builder = new ASTBuilder();
             var programa = (com.example.practica1_compi2.analizador.ast.NodoPrograma) builder.visit(parser.programa());
 
+            // ===== VALIDACIÓN SEMÁNTICA =====
             ValidadorSemantico validador = new ValidadorSemantico();
             var errores = validador.validar(programa);
 
             if (errores.isEmpty()) {
-                System.out.println("  ⚠️ NO se detectaron errores (se esperaban errores)");
+                System.out.println("  ✅ SIN errores semánticos");
             } else {
-                System.out.println("  ✅ Errores detectados (" + errores.size() + "):");
+                System.out.println("  ❌ Errores detectados (" + errores.size() + "):");
                 for (var error : errores) {
                     System.out.println("    " + error);
                 }
             }
+
+            // ===== COLOREADO =====
+            System.out.println("\n  📝 Código coloreado:");
+
+            // Crear una nueva instancia del parser para el coloreado
+            // (porque el parser ya fue consumido)
+            LatinusLexer lexerColor = new LatinusLexer(CharStreams.fromString(codigo));
+            LatinusParser parserColor = new LatinusParser(new CommonTokenStream(lexerColor));
+            var tree = parserColor.programa();
+
+            ASTColor colorVisitor = new ASTColor();
+            List<ColorMapa.TextoColoreado> coloreado = colorVisitor.visit(tree);
+
+            // Mostrar el resultado coloreado
+            for (ColorMapa.TextoColoreado tc : coloreado) {
+                if (tc.color() == null) {
+                    System.out.print(tc.texto());
+                } else {
+                    System.out.print("[" + tc.texto() + "(" + tc.color() + ")]");
+                }
+            }
+            System.out.println("\n");
+
         } catch (Exception e) {
-            System.out.println("  ⚠️ Error al parsear: " + e.getMessage());
+            System.out.println("  ⚠️ Error: " + e.getMessage());
+            e.printStackTrace();
         }
         System.out.println();
     }
