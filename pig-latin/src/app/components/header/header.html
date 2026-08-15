@@ -1,0 +1,48 @@
+<header class="header">
+  <div class="header-left">
+    <span class="logo">🐷 PigLatin</span>
+    <span class="version">v1.0</span>
+  </div>
+
+  <div class="header-center">
+    <!-- Archivo -->
+    <button class="btn btn-icon" (click)="onNew()" title="Nuevo">
+      <span>📄</span> Nuevo
+    </button>
+    <button class="btn btn-icon" (click)="onOpen()" title="Abrir">
+      <span>📂</span> Abrir
+    </button>
+    <button class="btn btn-icon" (click)="onSave()" title="Guardar">
+      <span>💾</span> Guardar
+    </button>
+    <button class="btn btn-icon" (click)="onDownload()" title="Descargar">
+      <span>⬇️</span> Descargar
+    </button>
+
+    <span class="divider">|</span>
+
+    <!-- Acciones -->
+    <button class="btn btn-primary" (click)="onAnalyze()">
+      🔍 Analizar
+    </button>
+    <button class="btn btn-success" (click)="onTranslate()">
+      🔄 Traducir
+    </button>
+
+    <span class="divider">|</span>
+
+    <!-- Visualizaciones -->
+    <button class="btn btn-outline" (click)="onOpenAST()">
+       AST
+    </button>
+    <button class="btn btn-outline" (click)="onOpenSymbolTable()">
+      📊 Tabla
+    </button>
+    <button class="btn btn-outline" (click)="onOpenStack()">
+      Pila
+    </button>
+    <button class="btn btn-outline" (click)="onOpenErrors()">
+      ❌ Errores
+    </button>
+  </div>
+</header>

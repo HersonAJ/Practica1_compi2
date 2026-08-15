@@ -1,0 +1,17 @@
+<div class="editor-container">
+  <div class="line-numbers-wrapper" #lineNumbersContainer>
+    <div class="line-numbers">
+      <div *ngFor="let num of lineNumbers" class="line-number">{{ num }}</div>
+    </div>
+  </div>
+  <div class="code-editor">
+    <textarea
+      #codeTextarea
+      (input)="onCodeChange($event)"
+      (scroll)="onScroll()"
+      [value]="code"
+      spellcheck="false"
+      class="code-input"
+    ></textarea>
+  </div>
+</div>

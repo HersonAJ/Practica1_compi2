@@ -1,0 +1,50 @@
+.traduccion-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;  
+  background: #1e1e1e;
+  font-family: 'Consolas', 'Courier New', monospace;
+  overflow: hidden; 
+}
+
+.traduccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3a3a3a;
+  min-height: 40px;
+
+  .title {
+    color: #d4d4d4;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .status {
+    font-size: 12px;
+    color: #858585;
+
+    &.success {
+      color: #4ec9b0;
+    }
+  }
+}
+
+.traduccion-content {
+  flex: 1;
+  padding: 16px;
+  overflow: auto;
+}
+
+.code-display {
+  margin: 0;
+  color: #d4d4d4;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
