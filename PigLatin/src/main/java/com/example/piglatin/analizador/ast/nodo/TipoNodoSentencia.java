@@ -1,0 +1,19 @@
+package com.example.piglatin.analizador.ast.nodo;
+
+public enum TipoNodoSentencia {
+    DECLARACION_VARIABLE,
+    DECLARACION_ARREGLO,
+    DEFINICION_STRUCT,
+    INSTANCIA_STRUCT,
+    ASIGNACION,
+    ASIGNACION_STRUCT_LITERAL,
+    CONDICIONAL,
+    CICLO_DUM,
+    CICLO_FACERE,
+    CICLO_PER,
+    RETORNO,
+    LECTURA,
+    ESCRITURA,
+    INTERRUPCION_CICLO,
+    LLAMADA_FUNCION_SENTENCIA
+}

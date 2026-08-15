@@ -1,12 +1,8 @@
-package com.example.practica1_compi2.analizador.builder;
+package com.example.piglatin.analizador.builder;
 
-import com.example.practica1_compi2.analizador.ast.NodoAST;
-import com.example.practica1_compi2.analizador.ast.NodoExpr;
-import com.example.practica1_compi2.analizador.ast.NodoFuncion;
-import com.example.practica1_compi2.analizador.ast.NodoPrograma;
-import com.example.practica1_compi2.analizador.ast.NodoSentencia;
-import com.example.practica1_compi2.analizador.gramatica.LatinusParserBaseVisitor;
-import com.example.practica1_compi2.analizador.gramatica.LatinusParser;
+import com.example.piglatin.analizador.ast.*;
+import com.example.piglatin.analizador.gramatica.LatinusParser;
+import com.example.piglatin.analizador.gramatica.LatinusParserBaseVisitor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -18,7 +14,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
     // ===================== Programa =====================
 
     @Override
-    public NodoAST visitPrograma(LatinusParser.ProgramaContext ctx) {|
+    public NodoAST visitPrograma(LatinusParser.ProgramaContext ctx) {
         List<NodoSentencia> globales = new ArrayList<>();
         if (ctx.seccionVariables() != null) {
             for (LatinusParser.DeclaracionVarContext d : ctx.seccionVariables().declaracionVar()) {

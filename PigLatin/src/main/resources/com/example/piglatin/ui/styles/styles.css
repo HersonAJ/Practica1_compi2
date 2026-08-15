@@ -1,0 +1,88 @@
+.root {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.header {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #3a3a3a;
+    -fx-border-width: 0 0 1 0;
+}
+
+.btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d4d4d4;
+    -fx-font-size: 13px;
+    -fx-padding: 4 10 4 10;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.btn:hover {
+    -fx-background-color: #3a3a3a;
+}
+
+.btn-primary {
+    -fx-background-color: #0e639c;
+    -fx-text-fill: white;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #1177bb;
+}
+
+.btn-success {
+    -fx-background-color: #2d7d46;
+    -fx-text-fill: white;
+}
+
+.btn-success:hover {
+    -fx-background-color: #3a9b57;
+}
+
+.file-name {
+    -fx-text-fill: #4ec9b0;
+    -fx-font-size: 13px;
+    -fx-padding: 0 0 0 8;
+    -fx-border-color: #3a3a3a;
+    -fx-border-width: 0 0 0 1;
+    -fx-padding: 0 0 0 8;
+}
+
+.editor-container {
+    -fx-background-color: #1e1e1e;
+}
+
+.traduccion-container {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #3a3a3a;
+    -fx-border-width: 0 0 0 1;
+}
+
+.code-input {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 14px;
+    -fx-padding: 10;
+    -fx-border-color: transparent;
+}
+
+.code-input .content {
+    -fx-background-color: #1e1e1e;
+}
+
+.status {
+    -fx-text-fill: #858585;
+    -fx-font-size: 12px;
+}
+
+.status.success {
+    -fx-text-fill: #4ec9b0;
+}
+
+.separator {
+    -fx-background-color: #3a3a3a;
+    -fx-padding: 0 4 0 4;
+}
