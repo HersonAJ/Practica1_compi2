@@ -1,7 +1,10 @@
 package com.example.piglatin.ui.components;
 
+import com.example.piglatin.service.CompileService;
+import com.example.piglatin.service.ResultadoCompilacion;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
@@ -17,6 +20,7 @@ import java.nio.file.StandardOpenOption;
 
 public class HeaderComponent {
 
+    private ErrorComponent errorComponent;
     private HBox view;
     private EditorComponent editor;
     private File currentFile;
@@ -32,6 +36,7 @@ public class HeaderComponent {
     private Button btnPila;
     private Button btnErrores;
     private Label lblFileName;
+    private TraduccionComponent traduccion;
 
     public HeaderComponent() {
         view = new HBox();
@@ -178,8 +183,27 @@ public class HeaderComponent {
 
     private void onAnalizar() {
         if (editor != null) {
-            System.out.println("Analizando codigo...");
-            System.out.println(editor.getCode());
+            String codigo = editor.getCode();
+            CompileService service = new CompileService();
+            ResultadoCompilacion resultado = service.analizar(codigo);
+
+            if (errorComponent != null) {
+                errorComponent.setErrors(
+                        resultado.erroresSintacticos(),
+                        resultado.erroresSemanticos(),
+                        resultado.errores()
+                );
+            }
+
+            if (resultado.exito() && traduccion != null) {
+                String trad = resultado.traduccion();
+                traduccion.setTranslation(trad != null ? trad : "La traducción está vacía");
+            } else if (traduccion != null) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Errores de compilacion:\n\n");
+                sb.append("Revisar la seccion de errores para mas informacion");
+                traduccion.setTranslation(sb.toString());
+            }
         }
     }
 
@@ -201,7 +225,20 @@ public class HeaderComponent {
         System.out.println("Mostrando Pila de Llamadas");
     }
 
+    public void setTraduccion(TraduccionComponent traduccion) {
+        this.traduccion = traduccion;
+    }
+
+    public void setErrorComponent(ErrorComponent errorComponent) {
+        this.errorComponent = errorComponent;
+    }
+
     private void onErrores() {
-        System.out.println("Mostrando Errores");
+        if (errorComponent != null) {
+            javafx.stage.Stage stage = new Stage();
+            stage.setTitle("Errores de compilacion");
+            stage.setScene(new Scene(errorComponent.getView(), 800, 400));
+            stage.show();
+        }
     }
 }

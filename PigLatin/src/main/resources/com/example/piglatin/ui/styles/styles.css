@@ -119,3 +119,42 @@
 .code-input .scroll-bar:vertical .thumb {
     -fx-background-color: #3a3a3a;
 }
+
+.error-container {
+    -fx-background-color: #1e1e1e;
+}
+
+.error-table {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+}
+
+.error-table .table-column {
+    -fx-text-fill: #d4d4d4;
+}
+
+.error-table .table-row-cell {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+}
+
+.error-table .table-row-cell:even {
+    -fx-background-color: #252526;
+}
+
+.error-table .table-row-cell:odd {
+    -fx-background-color: #1e1e1e;
+}
+
+.error-table .table-row-cell .text {
+    -fx-fill: #d4d4d4;
+}
+
+.error-table .column-header {
+    -fx-background-color: #2d2d2d;
+    -fx-text-fill: #d4d4d4;
+}
+
+.error-table .column-header .label {
+    -fx-text-fill: #d4d4d4;
+}
