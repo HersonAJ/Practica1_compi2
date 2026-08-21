@@ -1,9 +1,9 @@
 lexer grammar LatinusLexer;
 
-// ===== Comentarios y espacios en blanco =====
-LINEA_COMENTARIO   : '//' ~[\r\n]* -> skip ;
-BLOQUE_COMENTARIO  : '##' .*? '##' -> skip ;
-WS                 : [ \t\r\n]+ -> skip ;
+// ===== Comentarios y espacios en blanco regresar a la version anterio +  \u200B =====
+LINEA_COMENTARIO   : '//' ~[\r\n]* -> channel(HIDDEN) ;
+BLOQUE_COMENTARIO  : '##' .*? '##' -> channel(HIDDEN) ;
+WS                 : [ \t\r\n\u200B]+ -> channel(HIDDEN) ;
 
 // ===== Secciones del programa (deben ir ANTES de ID) =====
 VARIABILES   : 'VARIABILES' ;

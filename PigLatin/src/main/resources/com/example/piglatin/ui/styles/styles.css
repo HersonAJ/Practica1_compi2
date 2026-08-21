@@ -158,3 +158,38 @@
 .error-table .column-header .label {
     -fx-text-fill: #d4d4d4;
 }
+
+
+/* En el archivo CSS */
+.editor-container {
+    -fx-background-color: #1e1e1e;
+}
+
+.code-input {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+    -fx-font-family: 'Courier New';
+    -fx-font-size: 14px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.code-scroll {
+    -fx-background-color: #1e1e1e;
+}
+
+.code-scroll .viewport {
+    -fx-background-color: #1e1e1e;
+}
+
+.line-numbers {
+    -fx-background-color: #252526;
+    -fx-text-fill: #858585;
+    -fx-font-family: 'Courier New';
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-alignment: center-right;
+    -fx-padding: 0 10 0 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}

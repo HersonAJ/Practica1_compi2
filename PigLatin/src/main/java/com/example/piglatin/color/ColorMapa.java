@@ -6,42 +6,51 @@ import java.util.Map;
 public class ColorMapa {
 
     private static final Map<String, String> MAPA = new HashMap<>();
-    private static final String DEFAULT_COLOR = "#D4D4D4";
+    private static final String DEFAULT_COLOR = "#FFFFFF";
 
     static {
-        // ===== KEYWORDS - #569DC6 =====
-        agregar("#569DC6","VARIABILES", "MUNERA", "MAIOR", "FIN_PROGRAMA", "ESTO", "SERIES", "STRUCTURA",
-                "FINIS", "ACTIO", "RATIO", "REDDERE", "NON", "SI", "ALITER", "DUM", "FACERE", "PER", "PERGE", "INTERRUMPE");
+        // Identificadores - #DCDCAA (Amarillo)
+        agregar("#DCDCAA", "ID");
 
-        // ===== TYPES - #4EC9B0 =====
-        // Mayúsculas (para tokens del parser)
-        agregar("#4EC9B0", "NUMERUS", "TEXTUM", "DECIMALIS", "LITTERA");
-        // Minúsculas (para cuando se usa ctx.getText())
-        agregar("#4EC9B0", "numerus", "textum", "decimalis", "littera");
+        // Palabras reservadas - #569CD6 (Azul)
+        agregar("#569CD6",
+                "VARIABILES", "MUNERA", "MAIOR", "FIN_PROGRAMA", "ESTO", "SERIES", "STRUCTURA",
+                "FINIS", "SI", "ALITER", "DUM", "FACERE", "PER", "PERGE", "INTERRUMPE",
+                "ACTIO", "RATIO", "REDDERE", "NON"
+        );
 
-        // ===== LITERALS - #CE9178 =====
-        agregar("#CE9178", "INT", "FLOAT", "STRING", "CHAR", "VERUM", "FALSUS");
-        // Minúsculas para literales
-        agregar("#CE9178", "verum", "falsus");
+        // Tipos - #4EC9B0 (Verde Agua)
+        agregar("#4EC9B0",
+                "NUMERUS", "TEXTUM", "DECIMALIS", "LITTERA"
+        );
 
-        // ===== OPERATORS - #D16969 =====
-        // Tokens del parser
-        agregar("#D16969", "ASIGNAR", "MAS", "MENOS", "MULT", "DIV", "IGUAL", "DISTINTO", "MENOR", "MAYOR",
-                "MENIG", "MAYIG", "AND", "OR", "INC", "DEC", "LEER", "ESCRIBIR");
-        // Operadores literales (para ctx.getText())
-        agregar("#D16969", "=", "+", "-", "*", "/", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "++", "--", "<<", ">>");
+        // NUMBERS y BOOLEANS - #B5CEA8 (Verde Claro)
+        agregar("#B5CEA8",
+                "INT", "FLOAT", "VERUM", "FALSUS"
+        );
 
-        // ===== PUNCTUATION - #D4D4D4 =====
-        agregar("#D4D4D4", "PUNTOCOMA", "COMA", "PUNTO", "DOSPUNTOS", "LLAVE_A", "LLAVE_C", "CORCH_A", "CORCH_C",
-                "PAR_A", "PAR_C", "ID", "WS");
-        // Puntuación literal
-        agregar("#D4D4D4", ";", ",", ".", ":", "{", "}", "[", "]", "(", ")");
+        //STRINGS y CHARS - #CE9178 (Naranja)
+        agregar("#CE9178",
+                "STRING", "CHAR"
+        );
 
-        // ===== COMMENTS - #6A9955 =====
-        agregar("#6A9955", "LINEA_COMENTARIO", "BLOQUE_COMENTARIO");
+        // Operadores - #D16969 (Rojo/Rosa)
+        agregar("#D16969",
+                "ASIGNAR", "MAS", "MENOS", "MULT", "DIV", "IGUAL", "DISTINTO",
+                "MENOR", "MAYOR", "MENIG", "MAYIG", "AND", "OR", "INC", "DEC",
+                "LEER", "ESCRIBIR",
+                "=", "+", "-", "*", "/", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "++", "--", "<<", ">>"
+        );
+
+        // Puntuacion y limitadores - #808080 (Gris Medio)
+        agregar("#808080",
+                "PUNTOCOMA", "COMA", "PUNTO", "DOSPUNTOS", "LLAVE_A", "LLAVE_C",
+                "CORCH_A", "CORCH_C", "PAR_A", "PAR_C",
+                ";", ",", ".", ":", "{", "}", "[", "]", "(", ")"
+        );
     }
 
-    private static void agregar(String color, String... tokens) {
+    public static void agregar(String color, String... tokens) {
         for (String token : tokens) {
             MAPA.put(token, color);
         }

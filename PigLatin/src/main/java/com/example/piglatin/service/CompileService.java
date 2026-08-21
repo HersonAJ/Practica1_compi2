@@ -83,10 +83,11 @@ public class CompileService {
 
                 //coloreado
                 LatinusLexer lexerColor = new LatinusLexer(CharStreams.fromString(codigo));
-                LatinusParser parserColor = new LatinusParser(new CommonTokenStream(lexerColor));
+                CommonTokenStream tokensColor = new CommonTokenStream(lexerColor);
+                LatinusParser parserColor = new LatinusParser(tokensColor);
                 var treeColor = parserColor.programa();
 
-                ASTColor colorVisitor = new ASTColor();
+                ASTColor colorVisitor = new ASTColor(tokensColor);
                 List<ColorMapa.TextoColoreado> coloreado = colorVisitor.visit(treeColor);
 
                 // 5. Si hay errores semánticos, retornar
