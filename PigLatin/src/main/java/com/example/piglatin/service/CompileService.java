@@ -61,9 +61,34 @@ public class CompileService {
         }
     }
 
+
+    public String traducir(NodoPrograma programa) {
+        if (programa == null) {
+            return "// No hay árbol de sintaxis abstracta (AST) disponible para traducir.";
+        }
+
+        if (DEBUG) System.out.println("=== INICIO TRADUCCIÓN A PIGLATIN ===");
+
+        try {
+            TraductorPigLatin traductor = new TraductorPigLatin();
+            String traduccion = traductor.traducir(programa);
+            if (DEBUG) {
+                System.out.println("   Traducción generada: " + (traduccion != null ? traduccion.length() + " caracteres" : "NULL"));
+                System.out.println("=== FIN TRADUCCIÓN ===");
+            }
+            return traduccion;
+        } catch (Exception e) {
+            if (DEBUG) {
+                System.err.println("❌ Error durante la traducción: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return "// Error durante la traducción: " + e.getMessage();
+        }
+    }
+
     private ResultadoCompilacion analizarInterno(String codigo) {
 
-        // ===== 1. LEXER =====
+        // 1 LEXER
         if (DEBUG) System.out.println("1. Creando lexer...");
 
         LatinusLexer lexer = new LatinusLexer(CharStreams.fromString(codigo));
@@ -91,7 +116,7 @@ public class CompileService {
             );
         }
 
-        // ===== 2. PARSER =====
+        // 2 PARSER
         if (DEBUG) System.out.println("2. Creando parser...");
 
         LatinusParser parser = new LatinusParser(tokens);
@@ -113,7 +138,7 @@ public class CompileService {
 
         parser.setErrorHandler(new DefaultErrorStrategy());
 
-        // ===== 3. PARSEAR =====
+        // 3 PARSEAR
         if (DEBUG) System.out.println("3. Parseando...");
 
         ParserRuleContext tree;
@@ -139,7 +164,7 @@ public class CompileService {
             );
         }
 
-        // ===== 4. CONSTRUIR AST =====
+        // 4 CONSTRUIR AST
         if (DEBUG) System.out.println("4. Construyendo AST...");
 
         NodoPrograma programa;
@@ -168,7 +193,7 @@ public class CompileService {
             );
         }
 
-        // ===== 5. VALIDACIÓN SEMÁNTICA =====
+        // 5 VALIDACION SEMANTICA
         if (DEBUG) System.out.println("5. Validando semánticamente...");
 
         ValidadorSemantico validador = new ValidadorSemantico();
@@ -191,7 +216,7 @@ public class CompileService {
             );
         }
 
-        // ===== 6. COLOREADO (con manejo de errores) =====
+        // 6 COLOREADO
         if (DEBUG) System.out.println("6. Generando coloreado...");
 
         List<ColorMapa.TextoColoreado> coloreado;
@@ -229,34 +254,14 @@ public class CompileService {
             );
         }
 
-        // ===== 7. TRADUCCIÓN =====
-        if (DEBUG) System.out.println("7. Traduciendo a PigLatin...");
-
-        String traduccion;
-        try {
-            TraductorPigLatin traductor = new TraductorPigLatin();
-            traduccion = traductor.traducir(programa);
-            if (DEBUG) System.out.println("   Traducción generada: " + (traduccion != null ? traduccion.length() + " caracteres" : "NULL"));
-        } catch (Exception e) {
-            String errorMsg = "Error durante la traducción: " + e.getMessage();
-            if (DEBUG) {
-                System.err.println("❌ " + errorMsg);
-                e.printStackTrace();
-            }
-            return new ResultadoCompilacion(
-                    false, programa, validador.getTabla(), null, coloreado,
-                    List.of(), List.of(), List.of(), List.of(errorMsg), pasosPila
-            );
-        }
-
-        // ===== 8. ÉXITO =====
+        // 7 EXITO DE ANALISIS
         if (DEBUG) {
-            System.out.println("✅ ANÁLISIS COMPLETADO CON ÉXITO");
+            System.out.println("✅ ANÁLISIS COMPLETADO CON ÉXITO (Listo para traducir)");
             System.out.println("=== FIN ANÁLISIS ===");
         }
 
         return new ResultadoCompilacion(
-                true, programa, validador.getTabla(), traduccion, coloreado,
+                true, programa, validador.getTabla(), null, coloreado,
                 List.of(), List.of(), List.of(), List.of(), pasosPila
         );
     }

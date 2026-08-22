@@ -1,8 +1,7 @@
 package com.example.piglatin.ui.components;
 
 import com.example.piglatin.analizador.ast.*;
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.engine.*;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -94,34 +93,73 @@ public class ASTComponent {
 
     public void mostrarAST(NodoPrograma programa) {
         if (programa == null) return;
-
-        String dot = generarDOT(programa);
-        byte[] imageBytes = generarImagenBytes(dot);
-        if (imageBytes == null) {
-            return;
+        if (scrollPane.getScene() != null) {
+            scrollPane.getScene().setCursor(javafx.scene.Cursor.WAIT);
         }
 
-        Image fxImage = new Image(new ByteArrayInputStream(imageBytes));
+        javafx.concurrent.Task<Image> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected Image call() throws Exception {
+                String dot = generarDOT(programa);
+                byte[] imageBytes = generarImagenBytes(dot);
 
-        resetearZoom();
-        imageView.setImage(fxImage);
+                if (imageBytes == null || imageBytes.length == 0) {
+                    return null;
+                }
+                return new Image(new ByteArrayInputStream(imageBytes));
+            }
+        };
 
-        if (stage == null) {
-            stage = new Stage();
-            stage.setTitle("Arbol Sintactico Abstracto (AST)");
-            stage.initModality(Modality.WINDOW_MODAL);
+        task.setOnSucceeded(e -> {
+            if (scrollPane.getScene() != null) {
+                scrollPane.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
+            }
 
-            BorderPane layout = new BorderPane();
-            layout.setTop(crearBarraHerramientas());
-            layout.setCenter(scrollPane);
+            Image fxImage = task.getValue();
+            if (fxImage == null) return;
 
-            Scene scene = new Scene(layout, 1200, 800);
-            stage.setScene(scene);
-            stage.setMaximized(true);
-            stage.setOnCloseRequest(e -> stage.hide());
-        }
+            resetearZoom();
+            imageView.setImage(fxImage);
 
-        stage.showAndWait();
+            if (stage == null) {
+                stage = new Stage();
+                stage.setTitle("Árbol Sintáctico Abstracto (AST)");
+                stage.initModality(Modality.WINDOW_MODAL);
+
+                BorderPane layout = new BorderPane();
+                layout.setTop(crearBarraHerramientas());
+                layout.setCenter(scrollPane);
+
+                Scene scene = new Scene(layout);
+                stage.setScene(scene);
+
+                // Dimensiones explícitas
+                stage.setMinWidth(800);
+                stage.setMinHeight(500);
+                stage.setWidth(1100);
+                stage.setHeight(700);
+
+                stage.setOnCloseRequest(ev -> stage.hide());
+            }
+
+            if (!stage.isShowing()) {
+                stage.centerOnScreen();
+            }
+
+            stage.show();
+            stage.toFront();
+        });
+
+        task.setOnFailed(e -> {
+            if (scrollPane.getScene() != null) {
+                scrollPane.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
+            }
+            if (task.getException() != null) {
+                task.getException().printStackTrace();
+            }
+        });
+
+        new Thread(task).start();
     }
 
     private String generarDOT(NodoPrograma programa) {
@@ -452,6 +490,7 @@ public class ASTComponent {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Graphviz.fromString(dot)
+                    .totalMemory(64 * 1024 * 1024)
                     .render(Format.PNG)
                     .toOutputStream(baos);
             return baos.toByteArray();

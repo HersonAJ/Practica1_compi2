@@ -40,10 +40,16 @@
             <version>0.18.1</version>
         </dependency>
 
+        <!-- SLF4J para que Graphviz no tire el warning NOP logger -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.9</version>
+            <version>1.7.36</version>
         </dependency>
 
     </dependencies>

@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
@@ -52,6 +53,7 @@ public class HeaderComponent {
     private Stage stageErrores;
     private Stage stageTabla;
     private Stage stagePila;
+    private Stage stageAST;
     private ResultadoCompilacion ultimoResultado;
 
     public HeaderComponent() {
@@ -200,10 +202,8 @@ public class HeaderComponent {
         if (codigo == null || codigo.trim().isEmpty()) {
             if (errorComponent != null) {
                 errorComponent.setErrors(
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        List.of("El codigo esta vacio")
+                        List.of(), List.of(), List.of(),
+                        List.of("El código está vacío")
                 );
             }
             editor.cambiarAModoEdicion();
@@ -216,6 +216,7 @@ public class HeaderComponent {
             @Override
             protected ResultadoCompilacion call() {
                 CompileService service = new CompileService();
+                // Ejecuta el análisis
                 return service.analizar(codigo);
             }
         };
@@ -223,21 +224,17 @@ public class HeaderComponent {
         task.setOnSucceeded(ev -> {
             btnAnalizar.setDisable(false);
             ResultadoCompilacion resultado = task.getValue();
-            aplicarResultado(resultado);
+            aplicarResultadoAnálisis(resultado);
         });
 
         task.setOnFailed(ev -> {
             btnAnalizar.setDisable(false);
             Throwable ex = task.getException();
-            //if (DEBUG_UI) ex.printStackTrace();
 
             if (errorComponent != null) {
                 errorComponent.setErrors(
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        List.of("Error interno inesperado: " +
-                                (ex != null ? ex.getMessage() : "desconocido"))
+                        List.of(), List.of(), List.of(),
+                        List.of("Error interno inesperado: " + (ex != null ? ex.getMessage() : "desconocido"))
                 );
             }
             editor.cambiarAModoEdicion();
@@ -245,19 +242,49 @@ public class HeaderComponent {
 
         Thread hilo = new Thread(task, "analisis-latinus");
         hilo.setDaemon(true);
-        hilo.setUncaughtExceptionHandler((t, ex) -> {
-            btnAnalizar.setDisable(false);
-            ex.printStackTrace();
-            if (errorComponent != null) {
-                errorComponent.setErrors(
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        List.of("Error crítico no controlado: " + ex.getMessage())
-                );
-            }
-        });
         hilo.start();
+    }
+
+    private void aplicarResultadoAnálisis(ResultadoCompilacion resultado) {
+        this.ultimoResultado = resultado;
+
+        if (errorComponent != null) {
+            errorComponent.setErrors(
+                    resultado.erroresLexicos(),
+                    resultado.erroresSintacticos(),
+                    resultado.erroresSemanticos(),
+                    resultado.errores()
+            );
+        }
+
+        if (resultado.coloreado() != null && !resultado.coloreado().isEmpty()) {
+            editor.aplicarColores(resultado.coloreado());
+        } else {
+            editor.cambiarAModoEdicion();
+        }
+
+        if (resultado.exito()) {
+            if (traduccion != null) {
+                traduccion.setTranslation("// Análisis exitoso. Presiona 'Traducir' para generar PigLatin.");
+            }
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Análisis Completado");
+            alert.setHeaderText(null);
+            alert.setContentText("¡El análisis sintáctico y semántico finalizó con éxito!");
+            alert.showAndWait();
+
+        } else {
+            if (traduccion != null) {
+                traduccion.setTranslation("// Compilación fallida - Corrija los errores antes de traducir.");
+            }
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error de Análisis");
+            alert.setHeaderText("Se encontraron errores durante el análisis");
+            alert.setContentText("Revisa la consola de errores o presiona el botón '❌ Errores'.");
+            alert.showAndWait();
+        }
     }
 
     private void aplicarResultado(ResultadoCompilacion resultado) {
@@ -284,6 +311,20 @@ public class HeaderComponent {
         } else {
             editor.cambiarAModoEdicion();
         }
+
+        if (resultado.exito()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Análisis Completado");
+            alert.setHeaderText(null);
+            alert.setContentText("¡El análisis y la traducción se completaron con éxito!");
+            alert.showAndWait();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error de Compilación");
+            alert.setHeaderText("Se encontraron errores durante el análisis");
+            alert.setContentText("Revisa la sección de errores o presiona el botón '❌ Errores' para ver los detalles.");
+            alert.showAndWait();
+        }
     }
 
     private void onEditar() {
@@ -293,7 +334,26 @@ public class HeaderComponent {
     }
 
     private void onTraducir() {
-        if (editor != null) {
+        if (ultimoResultado == null || !ultimoResultado.exito() || ultimoResultado.ast() == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Traducción no permitida");
+            alert.setHeaderText("No se puede traducir");
+            alert.setContentText("Debes analizar el código correctamente y corregir todos los errores antes de traducir.");
+            alert.showAndWait();
+            return;
+        }
+
+        CompileService service = new CompileService();
+        String codigoTraducido = service.traducir(ultimoResultado.ast());
+
+        if (traduccion != null) {
+            traduccion.setTranslation(codigoTraducido);
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Traducción Generada");
+            alert.setHeaderText(null);
+            alert.setContentText("¡La traducción a PigLatin se ha generado correctamente!");
+            alert.showAndWait();
         }
     }
 
@@ -322,8 +382,17 @@ public class HeaderComponent {
         if (stageTabla == null) {
             stageTabla = new Stage();
             stageTabla.setTitle("Tabla de Símbolos");
-            stageTabla.setScene(new Scene((javafx.scene.Parent) tablaSimbolosComponent.getView(), 700, 450));
+            stageTabla.setScene(new Scene((javafx.scene.Parent) tablaSimbolosComponent.getView()));
+            stageTabla.setMinWidth(650);
+            stageTabla.setMinHeight(350);
+            stageTabla.setWidth(850);
+            stageTabla.setHeight(500);
         }
+
+        if (!stageTabla.isShowing()) {
+            stageTabla.centerOnScreen();
+        }
+
         stageTabla.show();
         stageTabla.toFront();
     }
@@ -342,8 +411,17 @@ public class HeaderComponent {
         if (stagePila == null) {
             stagePila = new Stage();
             stagePila.setTitle("Pila de Llamadas y Transiciones");
-            stagePila.setScene(new Scene((javafx.scene.Parent) pilaComponent.getView(), 850, 500));
+            stagePila.setScene(new Scene((javafx.scene.Parent) pilaComponent.getView()));
+            stagePila.setMinWidth(750);
+            stagePila.setMinHeight(400);
+            stagePila.setWidth(950);
+            stagePila.setHeight(600);
         }
+
+        if (!stagePila.isShowing()) {
+            stagePila.centerOnScreen();
+        }
+
         stagePila.show();
         stagePila.toFront();
     }
@@ -354,7 +432,17 @@ public class HeaderComponent {
         if (stageErrores == null) {
             stageErrores = new Stage();
             stageErrores.setTitle("Errores de Compilación");
-            stageErrores.setScene(new Scene(errorComponent.getView(), 900, 500));
+
+            Scene scene = new Scene(errorComponent.getView(), 900, 500);
+            stageErrores.setScene(scene);
+            stageErrores.setMinWidth(800);
+            stageErrores.setMinHeight(400);
+            stageErrores.setWidth(950);
+            stageErrores.setHeight(550);
+        }
+
+        if (!stageErrores.isShowing()) {
+            stageErrores.centerOnScreen();
         }
 
         stageErrores.show();
