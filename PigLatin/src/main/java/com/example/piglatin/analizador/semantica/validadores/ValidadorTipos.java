@@ -127,8 +127,28 @@ public class ValidadorTipos {
     }
 
     private String inferirAccesoAtributo(NodoExpr.AccesoAtributo acceso) {
-        // Validación de structs se hará en ValidadorEstructuras
-        return "desconocido";
+        String tipoBase = inferirTipo(acceso.objeto());
+        if ("desconocido".equals(tipoBase)) {
+            return "desconocido";
+        }
+
+        var structOpt = tabla.buscarStruct(tipoBase);
+        if (structOpt.isEmpty()) {
+            errores.add(new ErrorSemantico(acceso.linea(),
+                    "Tipo no es una estructura: " + tipoBase));
+            return "desconocido";
+        }
+
+        Map<String, String> campos = structOpt.get().campos();
+        String tipoCampo = campos.get(acceso.atributo());
+
+        if (tipoCampo == null) {
+            errores.add(new ErrorSemantico(acceso.linea(),
+                    "La estructura " + tipoBase + " no tiene campo: " + acceso.atributo()));
+            return "desconocido";
+        }
+
+        return tipoCampo;
     }
 
     private String inferirLlamadaFuncion(NodoExpr.LlamadaFuncion llamada) {

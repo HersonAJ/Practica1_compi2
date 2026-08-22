@@ -34,28 +34,32 @@ public class PilaListener extends LatinusParserBaseListener {
             return;
         }
 
+        // Verificar que haya suficientes elementos en la pila
+        if (pila.size() < n) {
+            return;
+        }
+
         List<String> reducidos = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            reducidos.add(0,pila.pop());
+            reducidos.add(0, pila.pop());
         }
 
         String noTerminal = nombreRegla(ctx);
         pila.push(noTerminal);
         contador++;
 
-        //la regla raiz programa es la unica sin padre: su reduce final es el acept
         boolean esRaiz = ctx.getParent() == null;
         TipoOperacion operacion = esRaiz ? TipoOperacion.ACCEPT : TipoOperacion.REDUCE;
         String verbo = esRaiz ? "accept" : "replace";
         String descripcion = verbo + " " + noTerminal + " -> " + String.join(" ", reducidos);
 
-        pasos.add(new PasoPila(contador,operacion,noTerminal,reducidos,snapshot(), descripcion));
+        pasos.add(new PasoPila(contador, operacion, noTerminal, reducidos, snapshot(), descripcion));
     }
 
     private String nombreRegla(ParserRuleContext ctx) {
         String nombreClase = ctx.getClass().getSimpleName();
         return nombreClase.endsWith("Context") ? nombreClase.substring(0, nombreClase.length() - "Context".length())
-        : nombreClase;
+                : nombreClase;
     }
 
     private List<String> snapshot() {

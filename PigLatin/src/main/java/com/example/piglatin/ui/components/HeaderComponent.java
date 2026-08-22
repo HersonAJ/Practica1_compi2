@@ -3,6 +3,7 @@ package com.example.piglatin.ui.components;
 import com.example.piglatin.analizador.ast.NodoPrograma;
 import com.example.piglatin.service.CompileService;
 import com.example.piglatin.service.ResultadoCompilacion;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-
 public class HeaderComponent {
 
     private final HBox view;
@@ -49,6 +49,10 @@ public class HeaderComponent {
     private ASTComponent astComponent;
     private PilaComponent pilaComponent;
     private TablaSimbolosComponent tablaSimbolosComponent;
+    private Stage stageErrores;
+    private Stage stageTabla;
+    private Stage stagePila;
+    private ResultadoCompilacion ultimoResultado;
 
     public HeaderComponent() {
         this.view = new HBox();
@@ -126,6 +130,7 @@ public class HeaderComponent {
             editor.setCode("// Nuevo archivo Latinus\n// Escribe tu codigo aqui\n\n");
             currentFile = null;
             lblFileName.setText("sin_titulo.lat");
+            ultimoResultado = null;
         }
     }
 
@@ -144,6 +149,7 @@ public class HeaderComponent {
                 }
                 currentFile = file;
                 lblFileName.setText(file.getName());
+                ultimoResultado = null;
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -194,20 +200,72 @@ public class HeaderComponent {
         if (codigo == null || codigo.trim().isEmpty()) {
             if (errorComponent != null) {
                 errorComponent.setErrors(
-                        List.of("El codigo esta vacio"),
                         List.of(),
-                        List.of()
+                        List.of(),
+                        List.of(),
+                        List.of("El codigo esta vacio")
                 );
             }
             editor.cambiarAModoEdicion();
             return;
         }
 
-        CompileService service = new CompileService();
-        ResultadoCompilacion resultado = service.analizar(codigo);
+        btnAnalizar.setDisable(true);
+
+        Task<ResultadoCompilacion> task = new Task<>() {
+            @Override
+            protected ResultadoCompilacion call() {
+                CompileService service = new CompileService();
+                return service.analizar(codigo);
+            }
+        };
+
+        task.setOnSucceeded(ev -> {
+            btnAnalizar.setDisable(false);
+            ResultadoCompilacion resultado = task.getValue();
+            aplicarResultado(resultado);
+        });
+
+        task.setOnFailed(ev -> {
+            btnAnalizar.setDisable(false);
+            Throwable ex = task.getException();
+            //if (DEBUG_UI) ex.printStackTrace();
+
+            if (errorComponent != null) {
+                errorComponent.setErrors(
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        List.of("Error interno inesperado: " +
+                                (ex != null ? ex.getMessage() : "desconocido"))
+                );
+            }
+            editor.cambiarAModoEdicion();
+        });
+
+        Thread hilo = new Thread(task, "analisis-latinus");
+        hilo.setDaemon(true);
+        hilo.setUncaughtExceptionHandler((t, ex) -> {
+            btnAnalizar.setDisable(false);
+            ex.printStackTrace();
+            if (errorComponent != null) {
+                errorComponent.setErrors(
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        List.of("Error crítico no controlado: " + ex.getMessage())
+                );
+            }
+        });
+        hilo.start();
+    }
+
+    private void aplicarResultado(ResultadoCompilacion resultado) {
+        this.ultimoResultado = resultado;
 
         if (errorComponent != null) {
             errorComponent.setErrors(
+                    resultado.erroresLexicos(),
                     resultado.erroresSintacticos(),
                     resultado.erroresSemanticos(),
                     resultado.errores()
@@ -240,66 +298,72 @@ public class HeaderComponent {
     }
 
     private void onAST() {
-        if (editor == null || astComponent == null) return;
-        String codigo = editor.getCode();
-        CompileService service = new CompileService();
-        ResultadoCompilacion resultado = service.analizar(codigo);
-        NodoPrograma programa = resultado.ast();
-        if (programa != null) {
-            astComponent.mostrarAST(programa);
+        if (astComponent == null) return;
+
+        if (ultimoResultado == null || ultimoResultado.ast() == null) {
+            avisarFaltaAnalisis("Analiza el código primero para poder ver el AST.");
+            return;
         }
+
+        astComponent.mostrarAST(ultimoResultado.ast());
     }
 
     private void onTabla() {
-        if (editor == null) return;
-
-        String codigo = editor.getCode();
-        CompileService service = new CompileService();
-        ResultadoCompilacion resultado = service.analizar(codigo);
-
-        if (resultado.tablaSimbolos() != null) {
-            if (tablaSimbolosComponent == null) {
-                tablaSimbolosComponent = new TablaSimbolosComponent();
-            }
-
-            tablaSimbolosComponent.cargarTabla(resultado.tablaSimbolos());
-
-            Stage stage = new Stage();
-            stage.setTitle("Tabla de Símbolos");
-            stage.setScene(new Scene((javafx.scene.Parent) tablaSimbolosComponent.getView(), 700, 450));
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.show();
+        if (ultimoResultado == null || ultimoResultado.tablaSimbolos() == null) {
+            avisarFaltaAnalisis("Analiza el código primero para poder ver la tabla de símbolos.");
+            return;
         }
+
+        if (tablaSimbolosComponent == null) {
+            tablaSimbolosComponent = new TablaSimbolosComponent();
+        }
+        tablaSimbolosComponent.cargarTabla(ultimoResultado.tablaSimbolos());
+
+        if (stageTabla == null) {
+            stageTabla = new Stage();
+            stageTabla.setTitle("Tabla de Símbolos");
+            stageTabla.setScene(new Scene((javafx.scene.Parent) tablaSimbolosComponent.getView(), 700, 450));
+        }
+        stageTabla.show();
+        stageTabla.toFront();
     }
 
     private void onPila() {
-        if (editor == null) return;
-
-        String codigo = editor.getCode();
-        CompileService service = new CompileService();
-        ResultadoCompilacion resultado = service.analizar(codigo);
-
-        if (resultado.pasosPila() != null) {
-            if (pilaComponent == null) {
-                pilaComponent = new PilaComponent();
-            }
-
-            pilaComponent.cargarPasos(resultado.pasosPila());
-
-            Stage stage = new Stage();
-            stage.setTitle("Pila de Llamadas y Transiciones");
-            stage.setScene(new Scene((javafx.scene.Parent) pilaComponent.getView(), 850, 500));
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.show();
+        if (ultimoResultado == null || ultimoResultado.pasosPila() == null) {
+            avisarFaltaAnalisis("Analiza el código primero para poder ver la pila.");
+            return;
         }
+
+        if (pilaComponent == null) {
+            pilaComponent = new PilaComponent();
+        }
+        pilaComponent.cargarPasos(ultimoResultado.pasosPila());
+
+        if (stagePila == null) {
+            stagePila = new Stage();
+            stagePila.setTitle("Pila de Llamadas y Transiciones");
+            stagePila.setScene(new Scene((javafx.scene.Parent) pilaComponent.getView(), 850, 500));
+        }
+        stagePila.show();
+        stagePila.toFront();
     }
 
     private void onErrores() {
+        if (errorComponent == null) return;
+
+        if (stageErrores == null) {
+            stageErrores = new Stage();
+            stageErrores.setTitle("Errores de Compilación");
+            stageErrores.setScene(new Scene(errorComponent.getView(), 900, 500));
+        }
+
+        stageErrores.show();
+        stageErrores.toFront();
+    }
+
+    private void avisarFaltaAnalisis(String mensaje) {
         if (errorComponent != null) {
-            Stage stage = new Stage();
-            stage.setTitle("Errores de compilacion");
-            stage.setScene(new Scene(errorComponent.getView(), 800, 400));
-            stage.show();
+            errorComponent.setErrors(List.of(), List.of(), List.of(), List.of(mensaje));
         }
     }
 

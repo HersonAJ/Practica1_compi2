@@ -18,14 +18,20 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         List<NodoSentencia> globales = new ArrayList<>();
         if (ctx.seccionVariables() != null) {
             for (LatinusParser.DeclaracionVarContext d : ctx.seccionVariables().declaracionVar()) {
-                globales.add((NodoSentencia) visit(d));
+                NodoAST nodo = visit(d);
+                if (nodo instanceof NodoSentencia) {
+                    globales.add((NodoSentencia) nodo);
+                }
             }
         }
 
         List<NodoFuncion> funciones = new ArrayList<>();
         if (ctx.seccionFunciones() != null) {
             for (LatinusParser.FuncionContext f : ctx.seccionFunciones().funcion()) {
-                funciones.add((NodoFuncion) visit(f));
+                NodoAST nodo = visit(f);
+                if (nodo instanceof NodoFuncion) {
+                    funciones.add((NodoFuncion) nodo);
+                }
             }
         }
 
@@ -36,16 +42,21 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitDeclaracionVar(LatinusParser.DeclaracionVarContext ctx) {
+        if (ctx.getChild(0) == null) {
+            return null;
+        }
         return visit(ctx.getChild(0));
     }
 
     @Override
     public NodoAST visitVariablePrimitiva(LatinusParser.VariablePrimitivaContext ctx) {
+        if (ctx.ID() == null || ctx.tipoPrimitivo() == null) {
+            return null;
+        }
         String tipo = ctx.tipoPrimitivo().getText();
         NodoExpr valor = ctx.expr() != null ? (NodoExpr) visit(ctx.expr()) : null;
         return new NodoSentencia.DeclaracionVariable(linea(ctx), ctx.ID().getText(), tipo, valor);
     }
-
     @Override
     public NodoAST visitVariableBooleana(LatinusParser.VariableBooleanaContext ctx) {
         boolean valor = ctx.VERUM() != null;
@@ -55,52 +66,86 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitArregloTipado(LatinusParser.ArregloTipadoContext ctx) {
+        if (ctx.ID() == null || ctx.INT() == null || ctx.tipo() == null) {
+            return null;
+        }
         List<NodoExpr> valores = new ArrayList<>();
         if (ctx.listaExpr() != null) {
             for (LatinusParser.ExprContext e : ctx.listaExpr().expr()) {
-                valores.add((NodoExpr) visit(e));
+                NodoExpr expr = (NodoExpr) visit(e);
+                if (expr != null) {
+                    valores.add(expr);
+                }
             }
         }
-        return new NodoSentencia.DeclaracionArreglo(
-                linea(ctx), ctx.ID().getText(), Integer.parseInt(ctx.INT().getText()),
-                ctx.tipo().getText(), valores);
+        try {
+            return new NodoSentencia.DeclaracionArreglo(
+                    linea(ctx), ctx.ID().getText(), Integer.parseInt(ctx.INT().getText()),
+                    ctx.tipo().getText(), valores);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
-    // series ID[N] : { verum, falsus, ... };  -- sin palabra de tipo, se infiere "booleano"
-    // porque no existe token de tipo explícito para booleanos
     @Override
     public NodoAST visitArregloBooleano(LatinusParser.ArregloBooleanoContext ctx) {
+        if (ctx.ID() == null || ctx.INT() == null || ctx.listaExpr() == null) {
+            return null;
+        }
         List<NodoExpr> valores = new ArrayList<>();
         for (LatinusParser.ExprContext e : ctx.listaExpr().expr()) {
-            valores.add((NodoExpr) visit(e));
+            NodoExpr expr = (NodoExpr) visit(e);
+            if (expr != null) {
+                valores.add(expr);
+            }
         }
-        return new NodoSentencia.DeclaracionArreglo(
-                linea(ctx), ctx.ID().getText(), Integer.parseInt(ctx.INT().getText()),
-                "booleano", valores);
+        try {
+            return new NodoSentencia.DeclaracionArreglo(
+                    linea(ctx), ctx.ID().getText(), Integer.parseInt(ctx.INT().getText()),
+                    "booleano", valores);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     @Override
     public NodoAST visitStructDef(LatinusParser.StructDefContext ctx) {
+        if (ctx.ID() == null) {
+            return null;
+        }
         List<NodoSentencia.CampoStruct> campos = new ArrayList<>();
         for (LatinusParser.CampoStructContext c : ctx.campoStruct()) {
-            campos.add(new NodoSentencia.CampoStruct(c.ID().getText(), c.tipo().getText()));
+            if (c.ID() != null && c.tipo() != null) {
+                campos.add(new NodoSentencia.CampoStruct(c.ID().getText(), c.tipo().getText()));
+            }
         }
         return new NodoSentencia.DefinicionStruct(linea(ctx), ctx.ID().getText(), campos);
     }
 
     @Override
     public NodoAST visitStructInstancia(LatinusParser.StructInstanciaContext ctx) {
+        if (ctx.ID(0) == null || ctx.ID(1) == null || ctx.literalStruct() == null) {
+            return null;
+        }
         return new NodoSentencia.InstanciaStruct(
                 linea(ctx),
-                ctx.ID(0).getText(),   // nombre de la variable
-                ctx.ID(1).getText(),   // nombre del tipo struct
+                ctx.ID(0).getText(),
+                ctx.ID(1).getText(),
                 construirMapaCampos(ctx.literalStruct()));
     }
 
     private Map<String, NodoExpr> construirMapaCampos(LatinusParser.LiteralStructContext ctx) {
         Map<String, NodoExpr> valores = new LinkedHashMap<>();
+        if (ctx == null) {
+            return valores;
+        }
         for (LatinusParser.AsignacionCampoContext c : ctx.asignacionCampo()) {
-            valores.put(c.ID().getText(), (NodoExpr) visit(c.expr()));
+            if (c.ID() != null && c.expr() != null) {
+                NodoExpr expr = (NodoExpr) visit(c.expr());
+                if (expr != null) {
+                    valores.put(c.ID().getText(), expr);
+                }
+            }
         }
         return valores;
     }
@@ -146,11 +191,18 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitSentencia(LatinusParser.SentenciaContext ctx) {
-        // Única sentencia sin nodo propio de bajo nivel: hay que envolver la
-        // llamada a función (que produce un NodoExpr) en un NodoSentencia.
+        if (ctx == null) {
+            return null;
+        }
         if (ctx.llamadaFuncion() != null) {
             NodoExpr.LlamadaFuncion llamada = (NodoExpr.LlamadaFuncion) visit(ctx.llamadaFuncion());
-            return new NodoSentencia.LlamadaFuncionSentencia(linea(ctx), llamada);
+            if (llamada != null) {
+                return new NodoSentencia.LlamadaFuncionSentencia(linea(ctx), llamada);
+            }
+            return null;
+        }
+        if (ctx.getChild(0) == null) {
+            return null;
         }
         return visit(ctx.getChild(0));
     }
@@ -158,7 +210,10 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
     private List<NodoSentencia> construirCuerpo(List<LatinusParser.SentenciaContext> sentencias) {
         List<NodoSentencia> cuerpo = new ArrayList<>();
         for (LatinusParser.SentenciaContext s : sentencias) {
-            cuerpo.add((NodoSentencia) visit(s));
+            NodoAST nodo = visit(s);
+            if (nodo instanceof NodoSentencia) {
+                cuerpo.add((NodoSentencia) nodo);
+            }
         }
         return cuerpo;
     }
@@ -197,15 +252,27 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitCondicional(LatinusParser.CondicionalContext ctx) {
+        if (ctx.expr() == null || ctx.bloqueSentencias() == null) {
+            return null;
+        }
         List<NodoSentencia.Rama> ramas = new ArrayList<>();
-        ramas.add(new NodoSentencia.Rama(
-                (NodoExpr) visit(ctx.expr()),
-                construirCuerpo(ctx.bloqueSentencias().sentencia())));
+
+        NodoExpr condicionIf = (NodoExpr) visit(ctx.expr());
+        if (condicionIf != null) {
+            ramas.add(new NodoSentencia.Rama(
+                    condicionIf,
+                    construirCuerpo(ctx.bloqueSentencias().sentencia())));
+        }
 
         for (LatinusParser.RamaAliterContext r : ctx.ramaAliter()) {
-            ramas.add(new NodoSentencia.Rama(
-                    (NodoExpr) visit(r.expr()),
-                    construirCuerpo(r.bloqueSentencias().sentencia())));
+            if (r.expr() != null && r.bloqueSentencias() != null) {
+                NodoExpr condicion = (NodoExpr) visit(r.expr());
+                if (condicion != null) {
+                    ramas.add(new NodoSentencia.Rama(
+                            condicion,
+                            construirCuerpo(r.bloqueSentencias().sentencia())));
+                }
+            }
         }
 
         List<NodoSentencia> elseCuerpo = ctx.ramaElse() != null
@@ -229,28 +296,41 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitCicloPer(LatinusParser.CicloPerContext ctx) {
+        if (ctx.variable() == null || ctx.expr() == null || ctx.incremento() == null) {
+            return null;
+        }
         NodoSentencia.DeclaracionVariable inicializacion =
                 (NodoSentencia.DeclaracionVariable) visit(ctx.variable());
         NodoExpr condicion = (NodoExpr) visit(ctx.expr());
         NodoSentencia incremento = construirIncremento(ctx.incremento());
+        if (inicializacion == null || condicion == null || incremento == null) {
+            return null;
+        }
         return new NodoSentencia.CicloPer(
                 linea(ctx), inicializacion, condicion, incremento, construirCuerpo(ctx.sentencia()));
     }
 
     // incremento: referencia (INC | DEC) | referencia ASIGNAR expr
     private NodoSentencia construirIncremento(LatinusParser.IncrementoContext ctx) {
+        if (ctx == null || ctx.referencia() == null) {
+            return null;
+        }
         int linea = linea(ctx);
-        // Caso: referencia++ o referencia--
         if (ctx.INC() != null || ctx.DEC() != null) {
             NodoExpr referencia = (NodoExpr) visit(ctx.referencia());
+            if (referencia == null) {
+                return null;
+            }
             String operador = ctx.INC() != null ? "+" : "-";
             NodoExpr uno = new NodoExpr.LiteralEntero(linea, 1);
             NodoExpr suma = new NodoExpr.Binaria(linea, operador, referencia, uno);
             return new NodoSentencia.Asignacion(linea, referencia, suma);
         }
-        // Caso: referencia = expr
         NodoExpr referencia = (NodoExpr) visit(ctx.referencia());
         NodoExpr valor = (NodoExpr) visit(ctx.expr());
+        if (referencia == null || valor == null) {
+            return null;
+        }
         return new NodoSentencia.Asignacion(linea, referencia, valor);
     }
 
@@ -338,7 +418,15 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     private NodoExpr construirBinaria(int linea, String operador,
                                       LatinusParser.ExprContext izqCtx, LatinusParser.ExprContext derCtx) {
-        return new NodoExpr.Binaria(linea, operador, (NodoExpr) visit(izqCtx), (NodoExpr) visit(derCtx));
+        if (izqCtx == null || derCtx == null) {
+            return null;
+        }
+        NodoExpr izq = (NodoExpr) visit(izqCtx);
+        NodoExpr der = (NodoExpr) visit(derCtx);
+        if (izq == null || der == null) {
+            return null;
+        }
+        return new NodoExpr.Binaria(linea, operador, izq, der);
     }
 
     @Override
@@ -348,10 +436,16 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
     @Override
     public NodoAST visitLlamadaFuncion(LatinusParser.LlamadaFuncionContext ctx) {
+        if (ctx.ID() == null) {
+            return null;
+        }
         List<NodoExpr> argumentos = new ArrayList<>();
         if (ctx.listaArgumentos() != null) {
             for (LatinusParser.ExprContext e : ctx.listaArgumentos().expr()) {
-                argumentos.add((NodoExpr) visit(e));
+                NodoExpr arg = (NodoExpr) visit(e);
+                if (arg != null) {
+                    argumentos.add(arg);
+                }
             }
         }
         return new NodoExpr.LlamadaFuncion(linea(ctx), ctx.ID().getText(), argumentos);
