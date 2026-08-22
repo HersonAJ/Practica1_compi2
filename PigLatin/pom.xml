@@ -56,7 +56,7 @@
                 <version>${antlr.version}</version>
                 <configuration>
                     <visitor>true</visitor>
-                    <listener>false</listener>
+                    <listener>true</listener>
                 </configuration>
                 <executions>
                     <execution>
