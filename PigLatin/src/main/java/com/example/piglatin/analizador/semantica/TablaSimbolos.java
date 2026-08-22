@@ -87,4 +87,28 @@ public class TablaSimbolos {
     public Optional<DefinicionFuncion> buscarFuncion(String nombre) {
         return Optional.ofNullable(funciones.get(nombre));
     }
+
+    // Métodos de lectura para la UI
+
+    public Map<String, DefinicionFuncion> getFunciones() {
+        return Collections.unmodifiableMap(funciones);
+    }
+
+    // Obtiene una lista con todas las variables visibles en la pila actual (desde el scope global hasta el local)
+    public List<SimboloVariable> getTodasLasVariables() {
+        List<SimboloVariable> lista = new ArrayList<>();
+        for (Scope s : pila) {
+            lista.addAll(s.variable.values());
+        }
+        return lista;
+    }
+
+    // Obtiene todos los structs visibles en la pila actual
+    public List<DefinicionStruct> getTodosLosStructs() {
+        List<DefinicionStruct> lista = new ArrayList<>();
+        for (Scope s : pila) {
+            lista.addAll(s.struct.values());
+        }
+        return lista;
+    }
 }

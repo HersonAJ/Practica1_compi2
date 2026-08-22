@@ -48,6 +48,7 @@ public class HeaderComponent {
     private Label lblFileName;
     private ASTComponent astComponent;
     private PilaComponent pilaComponent;
+    private TablaSimbolosComponent tablaSimbolosComponent;
 
     public HeaderComponent() {
         this.view = new HBox();
@@ -250,6 +251,25 @@ public class HeaderComponent {
     }
 
     private void onTabla() {
+        if (editor == null) return;
+
+        String codigo = editor.getCode();
+        CompileService service = new CompileService();
+        ResultadoCompilacion resultado = service.analizar(codigo);
+
+        if (resultado.tablaSimbolos() != null) {
+            if (tablaSimbolosComponent == null) {
+                tablaSimbolosComponent = new TablaSimbolosComponent();
+            }
+
+            tablaSimbolosComponent.cargarTabla(resultado.tablaSimbolos());
+
+            Stage stage = new Stage();
+            stage.setTitle("Tabla de Símbolos");
+            stage.setScene(new Scene((javafx.scene.Parent) tablaSimbolosComponent.getView(), 700, 450));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.show();
+        }
     }
 
     private void onPila() {
@@ -366,5 +386,9 @@ public class HeaderComponent {
 
     public void setPilaComponent(PilaComponent pilaComponent) {
         this.pilaComponent = pilaComponent;
+    }
+
+    public void setTablaSimbolosComponent(TablaSimbolosComponent tablaSimbolosComponent) {
+        this.tablaSimbolosComponent = tablaSimbolosComponent;
     }
 }
