@@ -246,7 +246,6 @@ public class ValidadorSemantico {
     }
 
     private void validarExpresion(NodoExpr expr) {
-        System.out.println("ValidarExpresion: " + expr.getClass().getSimpleName());
 
         //validar alcance
         validadorAlcance.validar(expr);

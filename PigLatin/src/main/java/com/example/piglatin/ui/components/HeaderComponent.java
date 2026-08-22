@@ -1,5 +1,6 @@
 package com.example.piglatin.ui.components;
 
+import com.example.piglatin.analizador.ast.NodoPrograma;
 import com.example.piglatin.service.CompileService;
 import com.example.piglatin.service.ResultadoCompilacion;
 import javafx.geometry.Insets;
@@ -45,6 +46,7 @@ public class HeaderComponent {
     private Button btnErrores;
     private Button btnLeyenda;
     private Label lblFileName;
+    private ASTComponent astComponent;
 
     public HeaderComponent() {
         this.view = new HBox();
@@ -232,16 +234,21 @@ public class HeaderComponent {
 
     private void onTraducir() {
         if (editor != null) {
-            System.out.println("Traduciendo a PigLatin...");
         }
     }
 
     private void onAST() {
-        System.out.println("Mostrando AST");
+        if (editor == null || astComponent == null) return;
+        String codigo = editor.getCode();
+        CompileService service = new CompileService();
+        ResultadoCompilacion resultado = service.analizar(codigo);
+        NodoPrograma programa = resultado.ast();
+        if (programa != null) {
+            astComponent.mostrarAST(programa);
+        }
     }
 
     private void onTabla() {
-        System.out.println("Mostrando Tabla de Simbolos");
     }
 
     private void onPila() {
@@ -332,5 +339,9 @@ public class HeaderComponent {
 
     public void setErrorComponent(ErrorComponent errorComponent) {
         this.errorComponent = errorComponent;
+    }
+
+    public void setASTComponent(ASTComponent astComponent) {
+        this.astComponent = astComponent;
     }
 }

@@ -1,9 +1,6 @@
 package com.example.piglatin.ui;
 
-import com.example.piglatin.ui.components.EditorComponent;
-import com.example.piglatin.ui.components.ErrorComponent;
-import com.example.piglatin.ui.components.HeaderComponent;
-import com.example.piglatin.ui.components.TraduccionComponent;
+import com.example.piglatin.ui.components.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.control.SplitPane;
 
@@ -14,6 +11,7 @@ public class MainController {
     private EditorComponent editor;
     private TraduccionComponent traduccion;
     private ErrorComponent errorComponent;
+    private ASTComponent astComponent;
 
     public MainController() {
         root = new BorderPane();
@@ -22,11 +20,13 @@ public class MainController {
         editor = new EditorComponent();
         traduccion = new TraduccionComponent();
         errorComponent = new ErrorComponent();
+        astComponent = new ASTComponent();
 
         // Conectar header con editor y traduccion
         header.setEditor(editor);
         header.setTraduccion(traduccion);
         header.setErrorComponent(errorComponent);
+        header.setASTComponent(astComponent);
         root.setTop(header.getView());
 
         // Editor + Traducción (SplitPane) - usar las mismas instancias

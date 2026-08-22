@@ -132,15 +132,13 @@ public class ValidadorTipos {
     }
 
     private String inferirLlamadaFuncion(NodoExpr.LlamadaFuncion llamada) {
-        System.out.println("🔍 Buscando función: " + llamada.nombre());
         var opt = tabla.buscarFuncion(llamada.nombre());
         if (opt.isEmpty()) {
-            System.out.println("❌ Función NO encontrada: " + llamada.nombre());
             errores.add(new ErrorSemantico(llamada.linea(),
                     "Función no declarada: " + llamada.nombre()));
             return "desconocido";
         }
-        System.out.println("✅ Función encontrada: " + llamada.nombre());
+
         var func = opt.get();
         var params = func.tipoParametros();
         var args = llamada.argumentos();
