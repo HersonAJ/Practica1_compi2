@@ -1,6 +1,7 @@
 package com.example.piglatin.service;
 
 import com.example.piglatin.analizador.ast.NodoPrograma;
+import com.example.piglatin.analizador.pila.PasoPila;
 import com.example.piglatin.analizador.semantica.TablaSimbolos;
 import com.example.piglatin.analizador.semantica.errores.ErrorSemantico;
 import com.example.piglatin.color.ColorMapa;
@@ -16,6 +17,7 @@ public record ResultadoCompilacion(
         List<ColorMapa.TextoColoreado> coloreado,
         List<String> erroresSintacticos,
         List<ErrorSemantico> erroresSemanticos,
-        List<String> errores
+        List<String> errores,
+        List<PasoPila> pasosPila
 ) {
 }

@@ -47,6 +47,7 @@ public class HeaderComponent {
     private Button btnLeyenda;
     private Label lblFileName;
     private ASTComponent astComponent;
+    private PilaComponent pilaComponent;
 
     public HeaderComponent() {
         this.view = new HBox();
@@ -252,7 +253,25 @@ public class HeaderComponent {
     }
 
     private void onPila() {
-        System.out.println("Mostrando Pila de Llamadas");
+        if (editor == null) return;
+
+        String codigo = editor.getCode();
+        CompileService service = new CompileService();
+        ResultadoCompilacion resultado = service.analizar(codigo);
+
+        if (resultado.pasosPila() != null) {
+            if (pilaComponent == null) {
+                pilaComponent = new PilaComponent();
+            }
+
+            pilaComponent.cargarPasos(resultado.pasosPila());
+
+            Stage stage = new Stage();
+            stage.setTitle("Pila de Llamadas y Transiciones");
+            stage.setScene(new Scene((javafx.scene.Parent) pilaComponent.getView(), 850, 500));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.show();
+        }
     }
 
     private void onErrores() {
@@ -343,5 +362,9 @@ public class HeaderComponent {
 
     public void setASTComponent(ASTComponent astComponent) {
         this.astComponent = astComponent;
+    }
+
+    public void setPilaComponent(PilaComponent pilaComponent) {
+        this.pilaComponent = pilaComponent;
     }
 }
