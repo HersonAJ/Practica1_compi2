@@ -65,24 +65,20 @@ public class ValidadorSemantico {
     }
 
     private void validarFuncion(NodoFuncion funcion) {
-        // Registrar función en tabla
-        List<String> tiposParametros = new ArrayList<>();
+        List<TablaSimbolos.Parametro> parametros = new ArrayList<>();
         for (NodoFuncion.Parametro p : funcion.parametros()) {
-            tiposParametros.add(p.tipo());
+            parametros.add(new TablaSimbolos.Parametro(p.nombre(), p.tipo()));
         }
-        boolean ok = tabla.declararFunciones(funcion.nombre(), tiposParametros, funcion.tipoRetorno());
+        boolean ok = tabla.declararFunciones(funcion.nombre(), parametros, funcion.tipoRetorno());
         if (!ok) {
             errores.add(new ErrorSemantico(funcion.linea(),
                     "Función ya declarada: " + funcion.nombre()));
             return;
         }
 
-        // Entrar a nuevo scope para la función
-        tabla.entrarScope();
-
-        // Declarar parámetros como variables locales
+        tabla.entrarScope("función " + funcion.nombre());
         for (NodoFuncion.Parametro p : funcion.parametros()) {
-            tabla.declararVariable(p.nombre(), p.tipo());
+            tabla.declararVariable(p.nombre(), p.tipo(), false, null, TablaSimbolos.Categoria.PARAMETRO);
         }
 
         // Validar variables locales
@@ -100,7 +96,7 @@ public class ValidadorSemantico {
     }
 
     private void validarMain(List<NodoSentencia> main) {
-        tabla.entrarScope();
+        tabla.entrarScope("main");
         validadorFlujo.entrarFuncion(null); // main no retorna valor
         validarSentencias(main);
         validadorFlujo.salirFuncion();
@@ -116,9 +112,9 @@ public class ValidadorSemantico {
     private void validarSentencia(NodoSentencia sentencia) {
         // 1. Validar declaraciones
         if (sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_VARIABLE ||
-        sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_ARREGLO ||
-        sentencia.tipoNodo() == TipoNodoSentencia.DEFINICION_STRUCT ||
-        sentencia.tipoNodo() == TipoNodoSentencia.INSTANCIA_STRUCT) {
+                sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_ARREGLO ||
+                sentencia.tipoNodo() == TipoNodoSentencia.DEFINICION_STRUCT ||
+                sentencia.tipoNodo() == TipoNodoSentencia.INSTANCIA_STRUCT) {
             validarDeclaracion(sentencia);
             return;
         }
@@ -169,7 +165,6 @@ public class ValidadorSemantico {
 
     private void validarAsignacionStructLiteral(NodoSentencia.AsignacionStructLiteral asignacion) {
         validarExpresion(asignacion.referencia());
-        // El literal struct se valida en ValidadorEstructuras
     }
 
     private void validarEscritura(NodoSentencia.Escritura escritura) {
@@ -190,13 +185,12 @@ public class ValidadorSemantico {
 
     private void validarRetorno(NodoSentencia.Retorno retorno) {
         validarExpresion(retorno.valor());
-        // El tipo de retorno se valida en ValidadorFlujo
     }
 
     private void validarCicloDum(NodoSentencia.CicloDum ciclo) {
         validarExpresion(ciclo.condicion());
         validadorFlujo.entrarCiclo();
-        tabla.entrarScope();
+        tabla.entrarScope("ciclo dum (línea " + ciclo.linea() + ")");
         validarSentencias(ciclo.cuerpo());
         tabla.salirScope();
         validadorFlujo.salirCiclo();
@@ -204,7 +198,7 @@ public class ValidadorSemantico {
 
     private void validarCicloFacere(NodoSentencia.CicloFacere ciclo) {
         validadorFlujo.entrarCiclo();
-        tabla.entrarScope();
+        tabla.entrarScope("ciclo facere (línea " + ciclo.linea() + ")");
         validarSentencias(ciclo.cuerpo());
         tabla.salirScope();
         validarExpresion(ciclo.condicion());
@@ -212,12 +206,11 @@ public class ValidadorSemantico {
     }
 
     private void validarCicloPer(NodoSentencia.CicloPer ciclo) {
-        // Validar inicialización
+        validadorFlujo.entrarCiclo();
+        tabla.entrarScope("ciclo per (línea " + ciclo.linea() + ")");
         validarDeclaracion(ciclo.inicializacion());
         validarExpresion(ciclo.condicion());
         validarSentencia(ciclo.incremento());
-        validadorFlujo.entrarCiclo();
-        tabla.entrarScope();
         validarSentencias(ciclo.cuerpo());
         tabla.salirScope();
         validadorFlujo.salirCiclo();
@@ -226,12 +219,12 @@ public class ValidadorSemantico {
     private void validarCondicional(NodoSentencia.Condicional condicional) {
         for (NodoSentencia.Rama rama : condicional.ramas()) {
             validarExpresion(rama.condicion());
-            tabla.entrarScope();
+            tabla.entrarScope("condicional (línea " + condicional.linea() + ")");
             validarSentencias(rama.cuerpo());
             tabla.salirScope();
         }
         if (condicional.elseCuerpo() != null) {
-            tabla.entrarScope();
+            tabla.entrarScope("aliter de condicional (línea " + condicional.linea() + ")");
             validarSentencias(condicional.elseCuerpo());
             tabla.salirScope();
         }
@@ -241,7 +234,6 @@ public class ValidadorSemantico {
         for (NodoExpr arg : llamada.argumentos()) {
             validarExpresion(arg);
         }
-        // La validación de tipos de la función se hace en ValidadorTipos
         validadorTipos.inferirTipo(llamada);
     }
 

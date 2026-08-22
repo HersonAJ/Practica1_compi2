@@ -1,32 +1,33 @@
 package com.example.piglatin.ui.components;
 
 import com.example.piglatin.analizador.semantica.TablaSimbolos;
-import com.example.piglatin.analizador.semantica.TablaSimbolos.DefinicionFuncion;
-import com.example.piglatin.analizador.semantica.TablaSimbolos.DefinicionStruct;
-import com.example.piglatin.analizador.semantica.TablaSimbolos.SimboloVariable;
+import com.example.piglatin.analizador.semantica.TablaSimbolos.EntradaSimbolo;
+import com.example.piglatin.analizador.semantica.TablaSimbolos.Parametro;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TablaSimbolosComponent {
 
     private final BorderPane view;
-    private final TableView<SimboloVariable> tablaVariables = new TableView<>();
-    private final TableView<DefinicionFuncion> tablaFunciones = new TableView<>();
-    private final TableView<DefinicionStruct> tablaStructs = new TableView<>();
+    private final TableView<EntradaSimbolo> tablaSimbolos = new TableView<>();
+    private final Label lblConteo = new Label();
 
     public TablaSimbolosComponent() {
         this.view = new BorderPane();
         this.view.setPadding(new Insets(10));
         this.view.setStyle("-fx-background-color: #1e1e2e;");
 
-        initTables();
+        initTable();
         initUI();
     }
 
@@ -39,86 +40,83 @@ public class TablaSimbolosComponent {
             limpiar();
             return;
         }
-
-        tablaVariables.setItems(FXCollections.observableArrayList(tabla.getTodasLasVariables()));
-        tablaFunciones.setItems(FXCollections.observableArrayList(tabla.getFunciones().values()));
-        tablaStructs.setItems(FXCollections.observableArrayList(tabla.getTodosLosStructs()));
+        List<EntradaSimbolo> registro = tabla.getRegistroCompleto();
+        tablaSimbolos.setItems(FXCollections.observableArrayList(registro));
+        lblConteo.setText(registro.size() + " símbolo(s)");
     }
 
     public void limpiar() {
-        tablaVariables.getItems().clear();
-        tablaFunciones.getItems().clear();
-        tablaStructs.getItems().clear();
+        tablaSimbolos.getItems().clear();
+        lblConteo.setText("0 símbolo(s)");
     }
 
     private void initUI() {
-        TabPane tabPane = new TabPane();
-        tabPane.setStyle("-fx-tab-min-width: 100px;");
+        Label titulo = new Label("Tabla de Símbolos");
+        titulo.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 14px; -fx-font-weight: bold;");
+        lblConteo.setStyle("-fx-text-fill: #AAAAAA;");
 
-        Tab tabVars = new Tab("Variables (" + tablaVariables.getItems().size() + ")", tablaVariables);
-        tabVars.setClosable(false);
-
-        Tab tabFuncs = new Tab("Funciones", tablaFunciones);
-        tabFuncs.setClosable(false);
-
-        Tab tabStructs = new Tab("Structs", tablaStructs);
-        tabStructs.setClosable(false);
-
-        tabPane.getTabs().addAll(tabVars, tabFuncs, tabStructs);
-        view.setCenter(tabPane);
+        VBox top = new VBox(4, titulo, lblConteo);
+        view.setTop(top);
+        view.setCenter(tablaSimbolos);
     }
 
-    private void initTables() {
-        // --- TABLA VARIABLES ---
-        TableColumn<SimboloVariable, String> colVarNombre = new TableColumn<>("Nombre");
-        colVarNombre.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().nombre()));
+    private void initTable() {
+        TableColumn<EntradaSimbolo, String> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().id())));
+        colId.setPrefWidth(50);
 
-        TableColumn<SimboloVariable, String> colVarTipo = new TableColumn<>("Tipo");
-        colVarTipo.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().tipo()));
+        TableColumn<EntradaSimbolo, String> colNombre = new TableColumn<>("Nombre");
+        colNombre.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().nombre()));
 
-        TableColumn<SimboloVariable, String> colVarArreglo = new TableColumn<>("Es Arreglo");
-        colVarArreglo.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().esArreglo() ? "Sí" : "No"));
+        TableColumn<EntradaSimbolo, String> colCategoria = new TableColumn<>("Categoría");
+        colCategoria.setCellValueFactory(data ->
+                new SimpleStringProperty(formatearCategoria(data.getValue().categoria())));
 
-        TableColumn<SimboloVariable, String> colVarTamano = new TableColumn<>("Tamaño Arreglo");
-        colVarTamano.setCellValueFactory(data -> new SimpleStringProperty(
-                data.getValue().tamanoArreglo() != null ? data.getValue().tamanoArreglo().toString() : "-"
-        ));
+        TableColumn<EntradaSimbolo, String> colTipo = new TableColumn<>("Tipo");
+        colTipo.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().tipo()));
 
-        tablaVariables.getColumns().addAll(colVarNombre, colVarTipo, colVarArreglo, colVarTamano);
-        tablaVariables.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableColumn<EntradaSimbolo, String> colNumParams = new TableColumn<>("# Parámetros");
+        colNumParams.setCellValueFactory(data ->
+                new SimpleStringProperty(String.valueOf(data.getValue().numParametros())));
+        colNumParams.setPrefWidth(90);
 
-        // --- TABLA FUNCIONES ---
-        TableColumn<DefinicionFuncion, String> colFuncNombre = new TableColumn<>("Nombre");
-        colFuncNombre.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().nombre()));
+        TableColumn<EntradaSimbolo, String> colParams = new TableColumn<>("Parámetros / Campos");
+        colParams.setCellValueFactory(data ->
+                new SimpleStringProperty(formatearParametros(data.getValue().parametros())));
+        colParams.setPrefWidth(220);
 
-        TableColumn<DefinicionFuncion, String> colFuncParams = new TableColumn<>("Parámetros");
-        colFuncParams.setCellValueFactory(data -> new SimpleStringProperty(
-                data.getValue().tipoParametros() != null ? String.join(", ", data.getValue().tipoParametros()) : "ninguno"
-        ));
+        TableColumn<EntradaSimbolo, String> colAmbito = new TableColumn<>("Ámbito");
+        colAmbito.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().ambito()));
+        colAmbito.setPrefWidth(160);
 
-        TableColumn<DefinicionFuncion, String> colFuncRetorno = new TableColumn<>("Tipo Retorno");
-        colFuncRetorno.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().tipoRetorno()));
+        TableColumn<EntradaSimbolo, String> colAlcance = new TableColumn<>("Alcance");
+        colAlcance.setCellValueFactory(data ->
+                new SimpleStringProperty(String.valueOf(data.getValue().alcance())));
+        colAlcance.setPrefWidth(70);
 
-        tablaFunciones.getColumns().addAll(colFuncNombre, colFuncParams, colFuncRetorno);
-        tablaFunciones.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaSimbolos.getColumns().addAll(
+                colId, colNombre, colCategoria, colTipo, colNumParams, colParams, colAmbito, colAlcance);
+        tablaSimbolos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
 
-        // --- TABLA STRUCTS ---
-        TableColumn<DefinicionStruct, String> colStructNombre = new TableColumn<>("Nombre Struct");
-        colStructNombre.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().nombre()));
+    private String formatearCategoria(TablaSimbolos.Categoria categoria) {
+        if (categoria == null) return "-";
+        return switch (categoria) {
+            case VARIABLE -> "Variable";
+            case ARREGLO -> "Arreglo";
+            case PARAMETRO -> "Parámetro";
+            case STRUCT_INSTANCIA -> "Instancia de Struct";
+            case STRUCT_DEF -> "Definición de Struct";
+            case FUNCION -> "Función";
+        };
+    }
 
-        TableColumn<DefinicionStruct, String> colStructCampos = new TableColumn<>("Campos (Nombre: Tipo)");
-        colStructCampos.setCellValueFactory(data -> {
-            Map<String, String> campos = data.getValue().campos();
-            if (campos == null || campos.isEmpty()) {
-                return new SimpleStringProperty("{}");
-            }
-            StringBuilder sb = new StringBuilder("{ ");
-            campos.forEach((k, v) -> sb.append(k).append(": ").append(v).append("; "));
-            sb.append("}");
-            return new SimpleStringProperty(sb.toString());
-        });
-
-        tablaStructs.getColumns().addAll(colStructNombre, colStructCampos);
-        tablaStructs.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    private String formatearParametros(List<Parametro> parametros) {
+        if (parametros == null || parametros.isEmpty()) {
+            return "-";
+        }
+        return parametros.stream()
+                .map(p -> p.nombre() + ": " + p.tipo())
+                .collect(Collectors.joining(", "));
     }
 }

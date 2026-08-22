@@ -87,8 +87,8 @@ public class ValidadorEstructuras {
             }
         }
 
-        // Declarar la variable con el tipo struct
-        boolean ok = tabla.declararVariable(instancia.nombre(), instancia.tipoStruct());
+        boolean ok = tabla.declararVariable(instancia.nombre(), instancia.tipoStruct(),
+                false, null, TablaSimbolos.Categoria.STRUCT_INSTANCIA);
         if (!ok) {
             errores.add(new ErrorSemantico(instancia.linea(),
                     "Variable ya declarada: " + instancia.nombre()));
