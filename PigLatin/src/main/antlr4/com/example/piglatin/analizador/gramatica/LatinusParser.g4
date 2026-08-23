@@ -57,7 +57,8 @@ structDef
     ;
 
 campoStruct
-    : ESTO ID DOSPUNTOS tipo PUNTOCOMA
+    : ESTO ID DOSPUNTOS tipo PUNTOCOMA          # campoStructPrimitivo
+    | SERIES ID DOSPUNTOS tipo PUNTOCOMA        # campoStructArreglo
     ;
 
 structInstancia

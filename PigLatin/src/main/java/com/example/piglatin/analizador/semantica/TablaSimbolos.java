@@ -51,7 +51,7 @@ public class TablaSimbolos {
         pila.push(new Scope("global"));
     }
 
-    // ===== manejo de scope =====
+    // manejo de scope------------------------------------------------------------------------------------------
 
     public void entrarScope(String etiqueta) {
         pila.push(new Scope(etiqueta));
@@ -76,7 +76,7 @@ public class TablaSimbolos {
         return pila.size();
     }
 
-    // ===== variables y arreglos =====
+    // variables y arreglos--------------------------------------------------------------------------------------
 
     public boolean declararVariable(String nombre, String tipo) {
         return declararVariable(nombre, tipo, false, null, Categoria.VARIABLE);
@@ -109,7 +109,7 @@ public class TablaSimbolos {
         return Optional.empty();
     }
 
-    // ===== structs =====
+    // structs--------------------------------------------------------------------------------------------------
 
     public boolean declararStruct(String nombre, Map<String, String> campos) {
         Scope actual = pila.peek();
@@ -117,8 +117,6 @@ public class TablaSimbolos {
             return false;
         }
         actual.struct.put(nombre, new DefinicionStruct(nombre, campos));
-
-        // Los campos del struct se registran como si fueran parámetros
         List<Parametro> camposComoParametros = campos.entrySet().stream()
                 .map(e -> new Parametro(e.getKey(), e.getValue()))
                 .toList();
@@ -138,7 +136,7 @@ public class TablaSimbolos {
         return Optional.empty();
     }
 
-    // ===== funciones =====
+    // funciones-------------------------------------------------------------------------------------------------------------
 
     public boolean declararFunciones(String nombre, List<Parametro> parametros, String tipoRetorno) {
         if (funciones.containsKey(nombre)) {
@@ -156,7 +154,7 @@ public class TablaSimbolos {
         return Optional.ofNullable(funciones.get(nombre));
     }
 
-    // ===== lectura para la UI =====
+    // lectura para la UI
 
     public Map<String, DefinicionFuncion> getFunciones() {
         return Collections.unmodifiableMap(funciones);

@@ -72,11 +72,11 @@ public class ValidadorSemantico {
         boolean ok = tabla.declararFunciones(funcion.nombre(), parametros, funcion.tipoRetorno());
         if (!ok) {
             errores.add(new ErrorSemantico(funcion.linea(),
-                    "Función ya declarada: " + funcion.nombre()));
+                    "Funcion ya declarada: " + funcion.nombre()));
             return;
         }
 
-        tabla.entrarScope("función " + funcion.nombre());
+        tabla.entrarScope("funcion " + funcion.nombre());
         for (NodoFuncion.Parametro p : funcion.parametros()) {
             tabla.declararVariable(p.nombre(), p.tipo(), false, null, TablaSimbolos.Categoria.PARAMETRO);
         }
@@ -86,12 +86,12 @@ public class ValidadorSemantico {
             validarDeclaracion(sentencia);
         }
 
-        // Validar cuerpo de la función
+        // Validar cuerpo de la funcion
         validadorFlujo.entrarFuncion(funcion.tipoRetorno());
         validarSentencias(funcion.cuerpo());
         validadorFlujo.salirFuncion();
 
-        // Salir del scope de la función
+        // Salir del scope de la funcion
         tabla.salirScope();
     }
 
@@ -119,7 +119,7 @@ public class ValidadorSemantico {
             return;
         }
 
-        // 2. Validar flujo (retorno, break, continue)
+        // 2. Validar flujo
         validadorFlujo.validar(sentencia);
 
         // 3. Validar expresiones (alcance y tipos)
@@ -158,7 +158,7 @@ public class ValidadorSemantico {
                 && !"struct".equals(tipoRef) && !"struct".equals(tipoVal)) {
             if (!validadorTipos.sonCompatibles(tipoVal, tipoRef)) {
                 errores.add(new ErrorSemantico(asignacion.linea(),
-                        "Tipo incompatible en asignación: " + tipoVal + " no es compatible con " + tipoRef));
+                        "Tipo incompatible en asignacion: " + tipoVal + " no es compatible con " + tipoRef));
             }
         }
     }
@@ -190,7 +190,7 @@ public class ValidadorSemantico {
     private void validarCicloDum(NodoSentencia.CicloDum ciclo) {
         validarExpresion(ciclo.condicion());
         validadorFlujo.entrarCiclo();
-        tabla.entrarScope("ciclo dum (línea " + ciclo.linea() + ")");
+        tabla.entrarScope("ciclo dum (linea " + ciclo.linea() + ")");
         validarSentencias(ciclo.cuerpo());
         tabla.salirScope();
         validadorFlujo.salirCiclo();
@@ -198,7 +198,7 @@ public class ValidadorSemantico {
 
     private void validarCicloFacere(NodoSentencia.CicloFacere ciclo) {
         validadorFlujo.entrarCiclo();
-        tabla.entrarScope("ciclo facere (línea " + ciclo.linea() + ")");
+        tabla.entrarScope("ciclo facere (linea " + ciclo.linea() + ")");
         validarSentencias(ciclo.cuerpo());
         tabla.salirScope();
         validarExpresion(ciclo.condicion());
@@ -207,7 +207,7 @@ public class ValidadorSemantico {
 
     private void validarCicloPer(NodoSentencia.CicloPer ciclo) {
         validadorFlujo.entrarCiclo();
-        tabla.entrarScope("ciclo per (línea " + ciclo.linea() + ")");
+        tabla.entrarScope("ciclo per (linea " + ciclo.linea() + ")");
         validarDeclaracion(ciclo.inicializacion());
         validarExpresion(ciclo.condicion());
         validarSentencia(ciclo.incremento());
@@ -219,12 +219,12 @@ public class ValidadorSemantico {
     private void validarCondicional(NodoSentencia.Condicional condicional) {
         for (NodoSentencia.Rama rama : condicional.ramas()) {
             validarExpresion(rama.condicion());
-            tabla.entrarScope("condicional (línea " + condicional.linea() + ")");
+            tabla.entrarScope("condicional (linea " + condicional.linea() + ")");
             validarSentencias(rama.cuerpo());
             tabla.salirScope();
         }
         if (condicional.elseCuerpo() != null) {
-            tabla.entrarScope("aliter de condicional (línea " + condicional.linea() + ")");
+            tabla.entrarScope("aliter de condicional (linea " + condicional.linea() + ")");
             validarSentencias(condicional.elseCuerpo());
             tabla.salirScope();
         }

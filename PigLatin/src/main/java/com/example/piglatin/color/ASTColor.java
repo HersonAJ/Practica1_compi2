@@ -4,10 +4,10 @@ package com.example.piglatin.color;
 import com.example.piglatin.analizador.gramatica.LatinusLexer;
 import com.example.piglatin.analizador.gramatica.LatinusParser;
 import com.example.piglatin.analizador.gramatica.LatinusParserBaseVisitor;
-import com.example.piglatin.color.ColorMapa.TextoColoreado;
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
+import com.example.piglatin.color.ColorMapa;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -211,7 +211,7 @@ public class ASTColor extends LatinusParserBaseVisitor<List<ColorMapa.TextoColor
 
         for (int i = 0; i < ctx.expr().size(); i++) {
             resultado.addAll(visit(ctx.expr(i)));
-            // Procesamos la coma usando el token exacto registrado en la gramática
+            // Procesamos la coma usando el token exacto registrado en la gramatica
             if (i < ctx.COMA().size()) {
                 resultado.addAll(procesarToken(ctx.COMA(i).getSymbol(), "COMA"));
             }
@@ -240,15 +240,24 @@ public class ASTColor extends LatinusParserBaseVisitor<List<ColorMapa.TextoColor
     }
 
     @Override
-    public List<ColorMapa.TextoColoreado> visitCampoStruct(LatinusParser.CampoStructContext ctx) {
+    public List<ColorMapa.TextoColoreado> visitCampoStructPrimitivo(LatinusParser.CampoStructPrimitivoContext ctx) {
         List<ColorMapa.TextoColoreado> resultado = new ArrayList<>();
-
         resultado.addAll(procesarToken(ctx.ESTO().getSymbol(), "ESTO"));
         resultado.addAll(procesarToken(ctx.ID().getSymbol(), "ID"));
         resultado.addAll(procesarToken(ctx.DOSPUNTOS().getSymbol(), "DOSPUNTOS"));
         resultado.addAll(visit(ctx.tipo()));
         resultado.addAll(procesarToken(ctx.PUNTOCOMA().getSymbol(), "PUNTOCOMA"));
+        return resultado;
+    }
 
+    @Override
+    public List<ColorMapa.TextoColoreado> visitCampoStructArreglo(LatinusParser.CampoStructArregloContext ctx) {
+        List<ColorMapa.TextoColoreado> resultado = new ArrayList<>();
+        resultado.addAll(procesarToken(ctx.SERIES().getSymbol(), "SERIES"));
+        resultado.addAll(procesarToken(ctx.ID().getSymbol(), "ID"));
+        resultado.addAll(procesarToken(ctx.DOSPUNTOS().getSymbol(), "DOSPUNTOS"));
+        resultado.addAll(visit(ctx.tipo()));
+        resultado.addAll(procesarToken(ctx.PUNTOCOMA().getSymbol(), "PUNTOCOMA"));
         return resultado;
     }
 

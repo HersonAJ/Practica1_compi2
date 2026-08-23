@@ -11,8 +11,7 @@ import java.util.Map;
 
 public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
 
-    // ===================== Programa =====================
-
+    // Programa---------------------------------------------------------------------------------------------------
     @Override
     public NodoAST visitPrograma(LatinusParser.ProgramaContext ctx) {
         List<NodoSentencia> globales = new ArrayList<>();
@@ -38,8 +37,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         return new NodoPrograma(globales, funciones, construirCuerpo(ctx.seccionMain().sentencia()));
     }
 
-    // ===================== Declaraciones =====================
-
+    // Declaraciones
     @Override
     public NodoAST visitDeclaracionVar(LatinusParser.DeclaracionVarContext ctx) {
         if (ctx.getChild(0) == null) {
@@ -47,17 +45,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         }
         return visit(ctx.getChild(0));
     }
-/*codigo funcional antes del cambio
-    @Override
-    public NodoAST visitVariablePrimitiva(LatinusParser.VariablePrimitivaContext ctx) {
-        if (ctx.ID() == null || ctx.tipoPrimitivo() == null) {
-            return null;
-        }
-        String tipo = ctx.tipoPrimitivo().getText();
-        NodoExpr valor = ctx.expr() != null ? (NodoExpr) visit(ctx.expr()) : null;
-        return new NodoSentencia.DeclaracionVariable(linea(ctx), ctx.ID().getText(), tipo, valor);
-    }
- */
+
     @Override
     public NodoAST visitVariablePrimitiva(LatinusParser.VariablePrimitivaContext ctx) {
         if (ctx.ID() == null || ctx.tipoPrimitivo() == null) {
@@ -73,31 +61,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         NodoExpr literal = new NodoExpr.LiteralBooleano(linea(ctx), valor);
         return new NodoSentencia.DeclaracionVariable(linea(ctx), ctx.ID().getText(), "booleano", literal);
     }
-/*codigo funcional antes del cambio de bool
-    @Override
-    public NodoAST visitArregloTipado(LatinusParser.ArregloTipadoContext ctx) {
-        if (ctx.ID() == null || ctx.INT() == null || ctx.tipo() == null) {
-            return null;
-        }
-        List<NodoExpr> valores = new ArrayList<>();
-        if (ctx.listaExpr() != null) {
-            for (LatinusParser.ExprContext e : ctx.listaExpr().expr()) {
-                NodoExpr expr = (NodoExpr) visit(e);
-                if (expr != null) {
-                    valores.add(expr);
-                }
-            }
-        }
-        try {
-            return new NodoSentencia.DeclaracionArreglo(
-                    linea(ctx), ctx.ID().getText(), Integer.parseInt(ctx.INT().getText()),
-                    ctx.tipo().getText(), valores);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
 
- */
     @Override
     public NodoAST visitArregloTipado(LatinusParser.ArregloTipadoContext ctx) {
         if (ctx.ID() == null || ctx.INT() == null || ctx.tipo() == null) {
@@ -141,7 +105,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
             return null;
         }
     }
-/*codigo funcional antes del cambio de bool
+
     @Override
     public NodoAST visitStructDef(LatinusParser.StructDefContext ctx) {
         if (ctx.ID() == null) {
@@ -149,26 +113,28 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         }
         List<NodoSentencia.CampoStruct> campos = new ArrayList<>();
         for (LatinusParser.CampoStructContext c : ctx.campoStruct()) {
-            if (c.ID() != null && c.tipo() != null) {
-                campos.add(new NodoSentencia.CampoStruct(c.ID().getText(), c.tipo().getText()));
+            NodoSentencia.CampoStruct campo = (NodoSentencia.CampoStruct) visit(c);
+            if (campo != null) {
+                campos.add(campo);
             }
         }
         return new NodoSentencia.DefinicionStruct(linea(ctx), ctx.ID().getText(), campos);
     }
 
-*/
     @Override
-    public NodoAST visitStructDef(LatinusParser.StructDefContext ctx) {
-        if (ctx.ID() == null) {
+    public NodoAST visitCampoStructPrimitivo(LatinusParser.CampoStructPrimitivoContext ctx) {
+        if (ctx.ID() == null || ctx.tipo() == null) {
             return null;
         }
-        List<NodoSentencia.CampoStruct> campos = new ArrayList<>();
-        for (LatinusParser.CampoStructContext c : ctx.campoStruct()) {
-            if (c.ID() != null && c.tipo() != null) {
-                campos.add(new NodoSentencia.CampoStruct(c.ID().getText(), normalizarTipo(c.tipo().getText())));
-            }
+        return new NodoSentencia.CampoStruct(linea(ctx), ctx.ID().getText(), normalizarTipo(ctx.tipo().getText()), false);
+    }
+
+    @Override
+    public NodoAST visitCampoStructArreglo(LatinusParser.CampoStructArregloContext ctx) {
+        if (ctx.ID() == null || ctx.tipo() == null) {
+            return null;
         }
-        return new NodoSentencia.DefinicionStruct(linea(ctx), ctx.ID().getText(), campos);
+        return new NodoSentencia.CampoStruct(linea(ctx), ctx.ID().getText(), normalizarTipo(ctx.tipo().getText()), true);
     }
 
     @Override
@@ -199,20 +165,14 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         return valores;
     }
 
-    // ===================== Funciones =====================
+    // Funciones-----------------------------------------------------------------------------------------------------------------
 
     @Override
     public NodoAST visitFuncionSinRetorno(LatinusParser.FuncionSinRetornoContext ctx) {
         return construirFuncion(linea(ctx), ctx.ID().getText(), null,
                 ctx.listaParametros(), ctx.bloqueVariables(), ctx.sentencia());
     }
-/*codigo funcional antes del cambio de bool
-    @Override
-    public NodoAST visitFuncionConRetorno(LatinusParser.FuncionConRetornoContext ctx) {
-        return construirFuncion(linea(ctx), ctx.ID().getText(), ctx.tipo().getText(),
-                ctx.listaParametros(), ctx.bloqueVariables(), ctx.sentencia());
-    }
-*/
+
     @Override
     public NodoAST visitFuncionConRetorno(LatinusParser.FuncionConRetornoContext ctx) {
         return construirFuncion(linea(ctx), ctx.ID().getText(), normalizarTipo(ctx.tipo().getText()),
@@ -242,8 +202,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
                 variablesLocales, construirCuerpo(sentenciasCtx));
     }
 
-    // ===================== Sentencias =====================
-
+    // Sentencias------------------------------------------------------------------------------------------------------------------
     @Override
     public NodoAST visitSentencia(LatinusParser.SentenciaContext ctx) {
         if (ctx == null) {
@@ -415,7 +374,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         return new NodoSentencia.InterrupcionCiclo(linea(ctx), tipo);
     }
 
-    // ===================== Expresiones =====================
+    // Expresiones--------------------------------------------------------------------------------------------------------
 
     @Override
     public NodoAST visitExprParentesis(LatinusParser.ExprParentesisContext ctx) {
@@ -543,7 +502,7 @@ public class ASTBuilder extends LatinusParserBaseVisitor<NodoAST> {
         return new NodoExpr.LiteralBooleano(linea(ctx), false);
     }
 
-    // ===================== Utilidad =====================
+    // Utilidad
 
     private int linea(org.antlr.v4.runtime.ParserRuleContext ctx) {
         return ctx.getStart().getLine();

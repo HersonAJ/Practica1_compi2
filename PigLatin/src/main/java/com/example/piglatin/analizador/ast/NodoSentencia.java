@@ -73,7 +73,7 @@ public sealed interface NodoSentencia extends NodoAST {
         }
     }
 
-    // esto <nombre> : <tipoStruct> { campo: expr, ... }
+    // esto nombre : tipoStruct { campo: expr,  }
     record InstanciaStruct(int linea, String nombre, String tipoStruct, Map<String, NodoExpr> valores) implements NodoSentencia {
         @Override
         public TipoNodoSentencia tipoNodo() {
@@ -112,7 +112,7 @@ public sealed interface NodoSentencia extends NodoAST {
         }
     }
 
-    // referencia = { campo: expr, ... }  (sin ';', confirmado con el auxiliar)
+    // referencia = { campo: expr,  }
     record AsignacionStructLiteral(int linea, NodoExpr referencia, NodoExpr.LiteralStruct valor) implements NodoSentencia {
         @Override
         public TipoNodoSentencia tipoNodo() {
@@ -207,7 +207,6 @@ public sealed interface NodoSentencia extends NodoAST {
         }
     }
 
-    // incremento desazucarado siempre a un NodoSentencia.Asignacion (ver ASTBuilder)
     record CicloPer(int linea, DeclaracionVariable inicializacion, NodoExpr condicion,
                     NodoSentencia incremento, List<NodoSentencia> cuerpo) implements NodoSentencia {
         @Override
@@ -220,7 +219,6 @@ public sealed interface NodoSentencia extends NodoAST {
             sb.append(PigLatinUtil.traducir("per")).append(" (");
 
             if (inicializacion != null) {
-                // quitamos el ';' final de la declaracion para colocarlo dentro del for ( ... ; ... ; ... )
                 StringBuilder initSb = new StringBuilder();
                 inicializacion.toPigLatin(initSb);
                 String initStr = initSb.toString();
@@ -273,7 +271,7 @@ public sealed interface NodoSentencia extends NodoAST {
         }
     }
 
-    // variable == null => '<<' sin capturar valor (solo lee y descarta)
+    // variable == null => '<<' sin capturar valor
     record Lectura(int linea, String variable) implements NodoSentencia {
         @Override
         public TipoNodoSentencia tipoNodo() {
@@ -335,7 +333,17 @@ public sealed interface NodoSentencia extends NodoAST {
         }
     }
 
-    record CampoStruct(String nombre, String tipo) {}
+    record CampoStruct(int linea, String nombre, String tipo, boolean esArreglo) implements NodoAST {
+        @Override
+        public void toPigLatin(StringBuilder sb) {
+            if (esArreglo) {
+                sb.append(PigLatinUtil.traducir("series")).append(" ");
+            } else {
+                sb.append(PigLatinUtil.traducir("esto")).append(" ");
+            }
+            sb.append(PigLatinUtil.traducir(nombre)).append(" : ").append(PigLatinUtil.traducir(tipo)).append(";");
+        }
+    }
 
     record Rama(NodoExpr condicion, List<NodoSentencia> cuerpo) {}
 }

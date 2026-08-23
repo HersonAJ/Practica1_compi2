@@ -57,7 +57,7 @@ public class ValidadorEstructuras {
         Map<String, String> camposEsperados = struct.campos();
         Map<String, NodoExpr> valores = instancia.valores();
 
-        // Validar que todos los campos estén presentes
+        // Validar que todos los campos esten presentes
         for (String campo : camposEsperados.keySet()) {
             if (!valores.containsKey(campo)) {
                 errores.add(new ErrorSemantico(instancia.linea(),

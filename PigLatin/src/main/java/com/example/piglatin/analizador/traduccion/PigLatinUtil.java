@@ -13,7 +13,7 @@ public class PigLatinUtil {
         if (texto.equals("<<")) return "%OINK_OINK";
         if (texto.equals(">>")) return "%OINK";
 
-        // Si no empieza con letra (ej. números, símbolos), no se altera
+        // Si no empieza con letra , no se altera
         if (!Character.isLetter(texto.charAt(0))) {
             return texto;
         }
