@@ -9,7 +9,6 @@ import com.example.piglatin.analizador.pila.PasoPila;
 import com.example.piglatin.analizador.pila.PilaListener;
 import com.example.piglatin.analizador.semantica.ValidadorSemantico;
 import com.example.piglatin.analizador.semantica.errores.ErrorSemantico;
-import com.example.piglatin.analizador.traduccion.TraductorPigLatin;
 import com.example.piglatin.color.ASTColor;
 import com.example.piglatin.color.ColorMapa;
 import org.antlr.v4.runtime.*;
@@ -41,7 +40,7 @@ public class CompileService {
         try {
             return analizarInterno(codigo);
         } catch (StackOverflowError soe) {
-            if (DEBUG) System.err.println("❌ StackOverflowError durante el análisis");
+            if (DEBUG) System.err.println("StackOverflowError durante el análisis");
             return new ResultadoCompilacion(
                     false, null, null, null, null,
                     List.of(), List.of(), List.of(),
@@ -70,16 +69,18 @@ public class CompileService {
         if (DEBUG) System.out.println("=== INICIO TRADUCCIÓN A PIGLATIN ===");
 
         try {
-            TraductorPigLatin traductor = new TraductorPigLatin();
-            String traduccion = traductor.traducir(programa);
+            StringBuilder sb = new StringBuilder();
+            programa.toPigLatin(sb);
+            String traduccion = sb.toString();
+
             if (DEBUG) {
-                System.out.println("   Traducción generada: " + (traduccion != null ? traduccion.length() + " caracteres" : "NULL"));
+                System.out.println("   Traducción generada: " + traduccion.length() + " caracteres");
                 System.out.println("=== FIN TRADUCCIÓN ===");
             }
             return traduccion;
         } catch (Exception e) {
             if (DEBUG) {
-                System.err.println("❌ Error durante la traducción: " + e.getMessage());
+                System.err.println("Error durante la traducción: " + e.getMessage());
                 e.printStackTrace();
             }
             return "// Error durante la traducción: " + e.getMessage();
@@ -241,13 +242,13 @@ public class CompileService {
             if (DEBUG) System.out.println("   Coloreado generado: " + (coloreado != null ? coloreado.size() + " elementos" : "NULL"));
         } catch (Exception e) {
             if (DEBUG) {
-                System.err.println("⚠️ Advertencia: Error en el coloreado: " + e.getMessage());
+                System.err.println("Advertencia: Error en el coloreado: " + e.getMessage());
             }
             coloreado = null;
         }
 
         if (!erroresSemanticos.isEmpty()) {
-            if (DEBUG) System.out.println("❌ Errores semánticos encontrados: " + erroresSemanticos.size());
+            if (DEBUG) System.out.println("Errores semánticos encontrados: " + erroresSemanticos.size());
             return new ResultadoCompilacion(
                     false, programa, validador.getTabla(), null, coloreado,
                     List.of(), List.of(), erroresSemanticos, List.of(), pasosPila
@@ -256,7 +257,7 @@ public class CompileService {
 
         // 7 EXITO DE ANALISIS
         if (DEBUG) {
-            System.out.println("✅ ANÁLISIS COMPLETADO CON ÉXITO (Listo para traducir)");
+            System.out.println("ANÁLISIS COMPLETADO CON ÉXITO (Listo para traducir)");
             System.out.println("=== FIN ANÁLISIS ===");
         }
 
