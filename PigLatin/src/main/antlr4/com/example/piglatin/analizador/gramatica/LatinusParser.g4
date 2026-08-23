@@ -35,7 +35,7 @@ variable
     ;
 
 tipoPrimitivo
-    : NUMERUS | TEXTUM | DECIMALIS | LITTERA
+    : NUMERUS | TEXTUM | DECIMALIS | LITTERA | BOOL   #ultimo_cambio_eliminar_si_falla
     ;
 
 tipo
@@ -119,9 +119,6 @@ asignacion
     : referencia ASIGNAR expr PUNTOCOMA
     ;
 
-// Caso especial: asignar un literal de struct anónimo a un atributo/elemento
-// existente (ej. mi_selva.animales[1] = { nombre: "Perro", apodo: "Canis" })
-// termina en '}', no lleva ';'
 asignacionStructLiteral
     : referencia ASIGNAR literalStruct
     ;

@@ -33,6 +33,7 @@ NUMERUS   : 'numerus' ;
 TEXTUM    : 'textum' ;
 DECIMALIS : 'decimalis' ;
 LITTERA   : 'littera' ;
+BOOL      : 'bool' ;       // forma de tipo explicito para booleano ultimo cambio
 VERUM     : 'verum' ;
 FALSUS    : 'falsus' ;
 
