@@ -7,7 +7,7 @@ public record PasoPila(
         TipoOperacion operacion,
         String simbolo,
         List<String> simbolosReducidos,
-        List<String> pila,
+        List<ElementoPila> pila,
         String descripcion
 ) {
 }

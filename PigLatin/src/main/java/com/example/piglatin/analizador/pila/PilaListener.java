@@ -8,44 +8,37 @@ import java.util.*;
 
 public class PilaListener extends LatinusParserBaseListener {
 
-    private final Deque<String> pila = new ArrayDeque<>();
+    private final Deque<ElementoPila> pila = new ArrayDeque<>();
     private final List<PasoPila> pasos = new ArrayList<>();
     private int contador = 0;
 
     @Override
     public void visitTerminal(TerminalNode node) {
-        String simobolo = node.getText();
-        pila.push(simobolo);
+        String simbolo = node.getText();
+        pila.push(new ElementoPila(simbolo, false));
         contador++;
         pasos.add(new PasoPila(
                 contador,
                 TipoOperacion.SHIFT,
-                simobolo,
+                simbolo,
                 null,
                 snapshot(),
-                "shift" + simobolo
+                "shift " + simbolo
         ));
     }
 
     @Override
     public void exitEveryRule(ParserRuleContext ctx) {
         int n = ctx.getChildCount();
-        if (n == 0) {
-            return;
-        }
-
-        // Verificar que haya suficientes elementos en la pila
-        if (pila.size() < n) {
-            return;
-        }
+        if (n == 0 || pila.size() < n) return;
 
         List<String> reducidos = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            reducidos.add(0, pila.pop());
+            reducidos.add(0, pila.pop().simbolo());
         }
 
         String noTerminal = nombreRegla(ctx);
-        pila.push(noTerminal);
+        pila.push(new ElementoPila(noTerminal, true));
         contador++;
 
         boolean esRaiz = ctx.getParent() == null;
@@ -58,12 +51,13 @@ public class PilaListener extends LatinusParserBaseListener {
 
     private String nombreRegla(ParserRuleContext ctx) {
         String nombreClase = ctx.getClass().getSimpleName();
-        return nombreClase.endsWith("Context") ? nombreClase.substring(0, nombreClase.length() - "Context".length())
+        return nombreClase.endsWith("Context")
+                ? nombreClase.substring(0, nombreClase.length() - "Context".length())
                 : nombreClase;
     }
 
-    private List<String> snapshot() {
-        List<String> copia = new ArrayList<>(pila);
+    private List<ElementoPila> snapshot() {
+        List<ElementoPila> copia = new ArrayList<>(pila);
         Collections.reverse(copia);
         return copia;
     }

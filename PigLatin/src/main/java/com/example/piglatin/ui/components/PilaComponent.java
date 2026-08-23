@@ -1,6 +1,8 @@
 package com.example.piglatin.ui.components;
 
+import com.example.piglatin.analizador.pila.ElementoPila;
 import com.example.piglatin.analizador.pila.PasoPila;
+import com.example.piglatin.analizador.pila.TipoOperacion;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -169,18 +171,28 @@ public class PilaComponent {
         tablaLog.scrollTo(pasoActualIndex);
 
         pilaContainer.getChildren().clear();
-        List<String> snapshot = paso.pila();
+        List<ElementoPila> snapshot = paso.pila();
+        boolean esAceptado = (paso.operacion() == TipoOperacion.ACCEPT);
 
         for (int i = snapshot.size() - 1; i >= 0; i--) {
-            String simbolo = snapshot.get(i);
-            Label celda = new Label(simbolo);
+            ElementoPila elem = snapshot.get(i);
+            Label celda = new Label(elem.simbolo());
             celda.setMaxWidth(Double.MAX_VALUE);
             celda.setAlignment(Pos.CENTER);
 
-            boolean isTop = (i == snapshot.size() - 1);
-            celda.setStyle(isTop
-                    ? "-fx-background-color: #89b4fa; -fx-text-fill: #11111b; -fx-font-weight: bold; -fx-padding: 6; -fx-background-radius: 4;"
-                    : "-fx-background-color: #313244; -fx-text-fill: #cdd6f4; -fx-padding: 5; -fx-background-radius: 4;");
+            String estilo;
+            if (esAceptado) {
+                // Estilo para ACCEPT (Todo el arbol reducido en la raiz)
+                estilo = "-fx-background-color: #cba6f7; -fx-text-fill: #11111b; -fx-font-weight: bold; -fx-padding: 8; -fx-background-radius: 4;";
+            } else if (elem.esReducido()) {
+                // Estilo para REDUCE (Verde)
+                estilo = "-fx-background-color: #1fec0d; -fx-text-fill: #11111b; -fx-font-weight: bold; -fx-padding: 6; -fx-background-radius: 4;";
+            } else {
+                // Estilo para SHIFT / Terminal (Rojo/Coral)
+                estilo = "-fx-background-color: #c91145; -fx-text-fill: #11111b; -fx-padding: 5; -fx-background-radius: 4;";
+            }
+
+            celda.setStyle(estilo);
             pilaContainer.getChildren().add(celda);
         }
     }
