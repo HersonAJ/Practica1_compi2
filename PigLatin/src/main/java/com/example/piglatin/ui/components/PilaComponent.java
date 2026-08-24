@@ -63,11 +63,11 @@ public class PilaComponent {
     }
 
     private void initUI() {
-        view.setStyle("-fx-background-color: #1e1e2e; -fx-padding: 10;");
+        view.setStyle("-fx-background-color: #1e1e1e; -fx-padding: 10;");
 
         HBox controles = new HBox(10);
         controles.setAlignment(Pos.CENTER_LEFT);
-        controles.setStyle("-fx-padding: 8 12; -fx-background-color: #2b2b3b; -fx-background-radius: 6;");
+        controles.setStyle("-fx-padding: 8 12; -fx-background-color: #2d2d2d; -fx-background-radius: 6; -fx-border-color: #3a3a3a; -fx-border-radius: 6;");
 
         Button btnFirst = new Button("⏮");
         Button btnPrev = new Button("◀");
@@ -105,27 +105,35 @@ public class PilaComponent {
             }
         });
 
-        lblPasoActual.setStyle("-fx-text-fill: #cdd6f4; -fx-font-weight: bold;");
+        lblPasoActual.setStyle("-fx-text-fill: #d4d4d4; -fx-font-weight: bold;");
         controles.getChildren().addAll(btnFirst, btnPrev, btnPlay, btnNext, btnLast, lblPasoActual, sliderTimeline, cbVelocidad);
 
         VBox panelPila = new VBox(8);
         panelPila.setPrefWidth(200);
-        panelPila.setStyle("-fx-padding: 10; -fx-background-color: #181825; -fx-background-radius: 6;");
+        panelPila.setStyle("-fx-padding: 10; -fx-background-color: #252526; -fx-background-radius: 6; -fx-border-color: #3a3a3a; -fx-border-radius: 6;");
 
         pilaContainer.setAlignment(Pos.BOTTOM_CENTER);
         ScrollPane scrollPila = new ScrollPane(pilaContainer);
         scrollPila.setFitToWidth(true);
-        scrollPila.setStyle("-fx-background: #181825; -fx-background-color: transparent;");
+        scrollPila.setStyle("-fx-background: #252526; -fx-background-color: transparent;");
         VBox.setVgrow(scrollPila, Priority.ALWAYS);
 
-        lblOperacionActual.setStyle("-fx-text-fill: #f9e2af; -fx-font-weight: bold;");
-        panelPila.getChildren().addAll(new Label("Pila de Llamadas:"), scrollPila, lblOperacionActual);
+        lblOperacionActual.setStyle("-fx-text-fill: #4ec9b0; -fx-font-weight: bold;");
+
+        Label lblTituloPila = new Label("Pila de Llamadas:");
+        lblTituloPila.setStyle("-fx-text-fill: #d4d4d4; -fx-font-weight: bold;");
+
+        panelPila.getChildren().addAll(lblTituloPila, scrollPila, lblOperacionActual);
 
         VBox panelLog = new VBox(8);
-        panelLog.setStyle("-fx-padding: 10; -fx-background-color: #181825; -fx-background-radius: 6;");
+        panelLog.setStyle("-fx-padding: 10; -fx-background-color: #252526; -fx-background-radius: 6; -fx-border-color: #3a3a3a; -fx-border-radius: 6;");
         configurarTablaLog();
         VBox.setVgrow(tablaLog, Priority.ALWAYS);
-        panelLog.getChildren().addAll(new Label("Log de Transiciones:"), tablaLog);
+
+        Label lblTituloLog = new Label("Log de Transiciones:");
+        lblTituloLog.setStyle("-fx-text-fill: #d4d4d4; -fx-font-weight: bold;");
+
+        panelLog.getChildren().addAll(lblTituloLog, tablaLog);
 
         SplitPane splitPane = new SplitPane(panelPila, panelLog);
         splitPane.setDividerPositions(0.35);

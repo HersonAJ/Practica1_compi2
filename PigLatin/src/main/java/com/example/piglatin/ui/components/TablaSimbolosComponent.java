@@ -25,7 +25,7 @@ public class TablaSimbolosComponent {
     public TablaSimbolosComponent() {
         this.view = new BorderPane();
         this.view.setPadding(new Insets(10));
-        this.view.setStyle("-fx-background-color: #1e1e2e;");
+        this.view.setStyle("-fx-background-color: #1e1e1e;");
 
         initTable();
         initUI();
@@ -52,8 +52,8 @@ public class TablaSimbolosComponent {
 
     private void initUI() {
         Label titulo = new Label("Tabla de Símbolos");
-        titulo.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 14px; -fx-font-weight: bold;");
-        lblConteo.setStyle("-fx-text-fill: #AAAAAA;");
+        titulo.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 14px; -fx-font-weight: bold;");
+        lblConteo.setStyle("-fx-text-fill: #858585;");
 
         VBox top = new VBox(4, titulo, lblConteo);
         view.setTop(top);
