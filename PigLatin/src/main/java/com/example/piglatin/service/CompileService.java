@@ -18,6 +18,289 @@ import java.util.List;
 
 public class CompileService {
 
+    private static final boolean DEBUG = false;
+
+    public CompileService() {
+    }
+
+    public ResultadoCompilacion analizar(String codigo) {
+
+        if (DEBUG) {
+            System.out.println("=== INICIO ANALISIS ===");
+            System.out.println("Longitud del codigo: " + (codigo != null ? codigo.length() : 0));
+        }
+
+        if (codigo == null || codigo.trim().isEmpty()) {
+            return new ResultadoCompilacion(
+                    false, null, null, null, null,
+                    List.of(), List.of(), List.of(), List.of("El codigo esta vacio"), List.of()
+            );
+        }
+
+        try {
+            return analizarInterno(codigo);
+        } catch (StackOverflowError soe) {
+            if (DEBUG) System.err.println("StackOverflowError durante el analisis");
+            return new ResultadoCompilacion(
+                    false, null, null, null, null,
+                    List.of(), List.of(), List.of(),
+                    List.of("El codigo produjo una estructura demasiado profunda o invalida para analizarse (revisa simbolos sin cerrar: (), {}, [])."),
+                    List.of()
+            );
+        } catch (Exception e) {
+            String errorMsg = "Error interno inesperado: " + e.getMessage();
+            if (DEBUG) {
+                System.err.println(" " + errorMsg);
+                e.printStackTrace();
+            }
+            return new ResultadoCompilacion(
+                    false, null, null, null, null,
+                    List.of(), List.of(), List.of(), List.of(errorMsg), List.of()
+            );
+        }
+    }
+
+
+    public String traducir(NodoPrograma programa) {
+        if (programa == null) {
+            return "// No hay arbol de sintaxis abstracta (AST) disponible para traducir.";
+        }
+
+        if (DEBUG) System.out.println("=== INICIO TRADUCCION A PIGLATIN ===");
+
+        try {
+            StringBuilder sb = new StringBuilder();
+            programa.toPigLatin(sb);
+            String traduccion = sb.toString();
+
+            if (DEBUG) {
+                System.out.println("   Traduccion generada: " + traduccion.length() + " caracteres");
+                System.out.println("=== FIN TRADUCCION ===");
+            }
+            return traduccion;
+        } catch (Exception e) {
+            if (DEBUG) {
+                System.err.println("Error durante la traduccion: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return "// Error durante la traduccion: " + e.getMessage();
+        }
+    }
+
+    private ResultadoCompilacion analizarInterno(String codigo) {
+
+        // 1 LEXER
+        if (DEBUG) System.out.println("1. Creando lexer...");
+
+        LatinusLexer lexer = new LatinusLexer(CharStreams.fromString(codigo));
+
+        List<ErrorPosicional> erroresLexer = new ArrayList<>();
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                    int line, int charPositionInLine, String msg,
+                                    RecognitionException e) {
+                erroresLexer.add(new ErrorPosicional(line, charPositionInLine, msg));
+                if (DEBUG) System.err.println("Error lexico en linea " + line + ":" + charPositionInLine + " - " + msg);
+            }
+        });
+
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        tokens.fill();
+
+        // 2 PARSER
+        if (DEBUG) System.out.println("2. Creando parser...");
+
+        LatinusParser parser = new LatinusParser(tokens);
+
+        PilaListener pilaListener = new PilaListener();
+        parser.addParseListener(pilaListener);
+
+        List<ErrorPosicional> erroresSintacticos = new ArrayList<>();
+        parser.removeErrorListeners();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                    int line, int charPositionInLine, String msg,
+                                    RecognitionException e) {
+                erroresSintacticos.add(new ErrorPosicional(line, charPositionInLine, msg));
+                if (DEBUG) System.err.println("Error sintactico en linea " + line + ":" + charPositionInLine + " - " + msg);
+            }
+        });
+
+        parser.setErrorHandler(new DefaultErrorStrategy());
+
+        // 3 PARSEAR
+        if (DEBUG) System.out.println("3. Parseando...");
+
+        ParserRuleContext tree = null;
+        try {
+            tree = parser.programa();
+        } catch (RecognitionException re) {
+            erroresSintacticos.add(new ErrorPosicional(-1, -1, "Error sintactico no recuperable: " + re.getMessage()));
+        }
+
+        List<PasoPila> pasosPila = pilaListener.getPasos();
+
+        if (DEBUG) {
+            System.out.println("   Arbol generado: " + (tree != null ? "OK" : "NULL"));
+            System.out.println("   Pasos de pila: " + pasosPila.size());
+            System.out.println("   Errores lexicos: " + erroresLexer.size());
+            System.out.println("   Errores sintacticos: " + erroresSintacticos.size());
+        }
+
+
+        boolean hayErroresLexicos = !erroresLexer.isEmpty();
+        boolean hayErroresSintacticos = !erroresSintacticos.isEmpty();
+
+        if (hayErroresLexicos || hayErroresSintacticos) {
+            if (DEBUG) System.out.println(" Errores encontrados en lexico/sintactico. No se construye AST.");
+
+            // Si hay errores, retorna SOLO los errores
+            return new ResultadoCompilacion(
+                    false,
+                    null,                    // No hay AST
+                    null,                    // No hay tabla de simbolos
+                    null,                    // No hay traduccion
+                    null,                    // No hay coloreado
+                    erroresLexer,           // Todos los errores lexicos
+                    erroresSintacticos,     // Todos los errores sintacticos
+                    List.of(),              // No hay errores semanticos
+                    List.of(),              // No hay mensajes de error adicionales
+                    pasosPila               // Los pasos de pila (pueden estar incompletos)
+            );
+        }
+
+        // 4 CONSTRUIR AST
+        if (DEBUG) System.out.println("4. Construyendo AST...");
+
+        NodoPrograma programa;
+        try {
+            ASTBuilder builder = new ASTBuilder();
+            programa = (NodoPrograma) builder.visit(tree);
+            if (DEBUG) System.out.println("   AST construido: OK");
+        } catch (Exception e) {
+            String errorMsg = "Error al construir el AST: " + e.getMessage();
+            if (DEBUG) {
+                System.err.println(" " + errorMsg);
+                e.printStackTrace();
+            }
+            return new ResultadoCompilacion(
+                    false, null, null, null, null,
+                    erroresLexer, erroresSintacticos, List.of(), List.of(errorMsg), pasosPila
+            );
+        }
+
+        if (programa == null) {
+            String errorMsg = "El AST resultante es nulo";
+            if (DEBUG) System.err.println(" " + errorMsg);
+            return new ResultadoCompilacion(
+                    false, null, null, null, null,
+                    erroresLexer, erroresSintacticos, List.of(), List.of(errorMsg), pasosPila
+            );
+        }
+
+        // 5 VALIDACION SEMANTICA
+        if (DEBUG) System.out.println("5. Validando semanticamente...");
+
+        ValidadorSemantico validador = new ValidadorSemantico();
+        List<ErrorSemantico> erroresSemanticos;
+        try {
+            erroresSemanticos = validador.validar(programa);
+            if (DEBUG) {
+                System.out.println("   Validacion semantica completada");
+                System.out.println("   Errores semanticos: " + erroresSemanticos.size());
+            }
+        } catch (Exception e) {
+            String errorMsg = "Error durante la validacion semantica: " + e.getMessage();
+            if (DEBUG) {
+                System.err.println(" " + errorMsg);
+                e.printStackTrace();
+            }
+            return new ResultadoCompilacion(
+                    false, programa, validador.getTabla(), null, null,
+                    erroresLexer, erroresSintacticos, List.of(), List.of(errorMsg), pasosPila
+            );
+        }
+
+        // 6 COLOREADO
+        if (DEBUG) System.out.println("6. Generando coloreado...");
+
+        List<ColorMapa.TextoColoreado> coloreado;
+        try {
+            LatinusLexer lexerColor = new LatinusLexer(CharStreams.fromString(codigo));
+            CommonTokenStream tokensColor = new CommonTokenStream(lexerColor);
+            LatinusParser parserColor = new LatinusParser(tokensColor);
+            parserColor.removeErrorListeners();
+            parserColor.addErrorListener(new BaseErrorListener() {
+                @Override
+                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                        int line, int charPositionInLine, String msg,
+                                        RecognitionException e) {
+                    if (DEBUG) System.out.println("   (Advertencia de coloreado: " + msg + ")");
+                }
+            });
+
+            var treeColor = parserColor.programa();
+            ASTColor colorVisitor = new ASTColor(tokensColor);
+            coloreado = colorVisitor.visit(treeColor);
+
+            if (DEBUG) System.out.println("   Coloreado generado: " + (coloreado != null ? coloreado.size() + " elementos" : "NULL"));
+        } catch (Exception e) {
+            if (DEBUG) {
+                System.err.println("Advertencia: Error en el coloreado: " + e.getMessage());
+            }
+            coloreado = null;
+        }
+
+        // 7 RETORNAR CON TODOS LOS ERRORES
+        boolean hayErroresSemanticos = !erroresSemanticos.isEmpty();
+
+        if (DEBUG) {
+            System.out.println("ANALISIS COMPLETADO");
+            System.out.println("   Errores lexicos: " + erroresLexer.size());
+            System.out.println("   Errores sintacticos: " + erroresSintacticos.size());
+            System.out.println("   Errores semanticos: " + erroresSemanticos.size());
+            System.out.println("=== FIN ANALISIS ===");
+        }
+
+        return new ResultadoCompilacion(
+                !hayErroresSemanticos,
+                programa,
+                validador.getTabla(),
+                null,
+                coloreado,
+                erroresLexer,
+                erroresSintacticos,
+                erroresSemanticos,
+                List.of(),
+                pasosPila
+        );
+    }
+}
+
+/*version estable pero no valida errores juntos
+package com.example.piglatin.service;
+
+import com.example.piglatin.analizador.ast.NodoPrograma;
+import com.example.piglatin.analizador.builder.ASTBuilder;
+import com.example.piglatin.analizador.errores.ErrorPosicional;
+import com.example.piglatin.analizador.gramatica.LatinusLexer;
+import com.example.piglatin.analizador.gramatica.LatinusParser;
+import com.example.piglatin.analizador.pila.PasoPila;
+import com.example.piglatin.analizador.pila.PilaListener;
+import com.example.piglatin.analizador.semantica.ValidadorSemantico;
+import com.example.piglatin.analizador.semantica.errores.ErrorSemantico;
+import com.example.piglatin.color.ASTColor;
+import com.example.piglatin.color.ColorMapa;
+import org.antlr.v4.runtime.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CompileService {
+
     private static final boolean DEBUG = true;
 
     public CompileService() {
@@ -50,7 +333,7 @@ public class CompileService {
         } catch (Exception e) {
             String errorMsg = "Error interno inesperado: " + e.getMessage();
             if (DEBUG) {
-                System.err.println("❌ " + errorMsg);
+                System.err.println(" " + errorMsg);
                 e.printStackTrace();
             }
             return new ResultadoCompilacion(
@@ -110,7 +393,7 @@ public class CompileService {
         tokens.fill();
 
         if (!erroresLexer.isEmpty()) {
-            if (DEBUG) System.out.println("❌ Errores lexicos encontrados: " + erroresLexer.size());
+            if (DEBUG) System.out.println(" Errores lexicos encontrados: " + erroresLexer.size());
             return new ResultadoCompilacion(
                     false, null, null, null, null,
                     erroresLexer, List.of(), List.of(), List.of(), List.of()
@@ -176,7 +459,7 @@ public class CompileService {
         } catch (Exception e) {
             String errorMsg = "Error al construir el AST: " + e.getMessage();
             if (DEBUG) {
-                System.err.println("❌ " + errorMsg);
+                System.err.println(" " + errorMsg);
                 e.printStackTrace();
             }
             return new ResultadoCompilacion(
@@ -187,7 +470,7 @@ public class CompileService {
 
         if (programa == null) {
             String errorMsg = "El AST resultante es nulo";
-            if (DEBUG) System.err.println("❌ " + errorMsg);
+            if (DEBUG) System.err.println(" " + errorMsg);
             return new ResultadoCompilacion(
                     false, null, null, null, null,
                     List.of(), List.of(), List.of(), List.of(errorMsg), pasosPila
@@ -208,7 +491,7 @@ public class CompileService {
         } catch (Exception e) {
             String errorMsg = "Error durante la validacion semantica: " + e.getMessage();
             if (DEBUG) {
-                System.err.println("❌ " + errorMsg);
+                System.err.println(" " + errorMsg);
                 e.printStackTrace();
             }
             return new ResultadoCompilacion(
@@ -267,3 +550,4 @@ public class CompileService {
         );
     }
 }
+ */
