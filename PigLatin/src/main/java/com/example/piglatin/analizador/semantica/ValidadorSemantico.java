@@ -65,6 +65,7 @@ public class ValidadorSemantico {
     }
 
     private void validarFuncion(NodoFuncion funcion) {
+        // Registrar funcion en tabla, con nombre Y tipo de cada parametro
         List<TablaSimbolos.Parametro> parametros = new ArrayList<>();
         for (NodoFuncion.Parametro p : funcion.parametros()) {
             parametros.add(new TablaSimbolos.Parametro(p.nombre(), p.tipo()));
@@ -76,7 +77,10 @@ public class ValidadorSemantico {
             return;
         }
 
+        // Entrar a nuevo scope para la funcion, con etiqueta real
         tabla.entrarScope("funcion " + funcion.nombre());
+
+        // Declarar parametros como variables locales
         for (NodoFuncion.Parametro p : funcion.parametros()) {
             tabla.declararVariable(p.nombre(), p.tipo(), false, null, TablaSimbolos.Categoria.PARAMETRO);
         }
@@ -110,11 +114,14 @@ public class ValidadorSemantico {
     }
 
     private void validarSentencia(NodoSentencia sentencia) {
-        // 1. Validar declaraciones
+        // Las declaraciones solo son validas en la seccion global VARIABILES>
+        // o en el bloque VARIABILES[...] al inicio de una funcion — ambos
         if (sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_VARIABLE ||
                 sentencia.tipoNodo() == TipoNodoSentencia.DECLARACION_ARREGLO ||
                 sentencia.tipoNodo() == TipoNodoSentencia.DEFINICION_STRUCT ||
                 sentencia.tipoNodo() == TipoNodoSentencia.INSTANCIA_STRUCT) {
+            errores.add(new ErrorSemantico(sentencia.linea(),
+                    "Las declaraciones solo son validas en VARIABILES> o al inicio de una funcion, dentro de VARIABILES[...]"));
             validarDeclaracion(sentencia);
             return;
         }
@@ -206,11 +213,12 @@ public class ValidadorSemantico {
     }
 
     private void validarCicloPer(NodoSentencia.CicloPer ciclo) {
-        validadorFlujo.entrarCiclo();
-        tabla.entrarScope("ciclo per (linea " + ciclo.linea() + ")");
+        // Validar inicializacion
         validarDeclaracion(ciclo.inicializacion());
         validarExpresion(ciclo.condicion());
         validarSentencia(ciclo.incremento());
+        validadorFlujo.entrarCiclo();
+        tabla.entrarScope("ciclo per (linea " + ciclo.linea() + ")");
         validarSentencias(ciclo.cuerpo());
         tabla.salirScope();
         validadorFlujo.salirCiclo();
@@ -243,11 +251,6 @@ public class ValidadorSemantico {
         validadorAlcance.validar(expr);
         //validar tipos
         validadorTipos.inferirTipo(expr);
-        //validar acceso a struct
-        if (expr.tipoNodo() == TipoNodoExpr.ACCESO_ATRIBUTO) {
-            NodoExpr.AccesoAtributo acceso = (NodoExpr.AccesoAtributo) expr;
-            validadorEstructuras.validarAccesoAtributo(acceso);
-        }
 
         //recursivamente validar subexpresiones
         if (expr.tipoNodo() == TipoNodoExpr.BINARIA) {

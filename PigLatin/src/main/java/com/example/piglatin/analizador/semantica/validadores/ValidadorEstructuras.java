@@ -27,23 +27,6 @@ public class ValidadorEstructuras {
         }
     }
 
-    public void validarAccesoAtributo(NodoExpr.AccesoAtributo acceso) {
-        String tipoObjeto = validadorTipos.inferirTipo(acceso.objeto());
-        var optStruct = tabla.buscarStruct(tipoObjeto);
-
-        if (optStruct.isEmpty()) {
-            errores.add(new ErrorSemantico(acceso.linea(),
-                    "Tipo no es una estructura: " + tipoObjeto));
-            return;
-        }
-
-        TablaSimbolos.DefinicionStruct struct = optStruct.get();
-        if (!struct.campos().containsKey(acceso.atributo())) {
-            errores.add(new ErrorSemantico(acceso.linea(),
-                    "La estructura " + tipoObjeto + " no tiene el campo: " + acceso.atributo()));
-        }
-    }
-
     private void validarInstanciaStruct(NodoSentencia.InstanciaStruct instancia) {
         var optStruct = tabla.buscarStruct(instancia.tipoStruct());
 

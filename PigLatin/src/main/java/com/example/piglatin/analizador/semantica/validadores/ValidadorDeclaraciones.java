@@ -41,6 +41,13 @@ public class ValidadorDeclaraciones {
         if (!ok) {
             errores.add(new ErrorSemantico(arr.linea(), "Arreglo ya declarado: " + arr.nombre()));
         }
+        // El número de valores iniciales (cuando se proporcionan) debe coincidir exactamente con el tamaño declarado del arreglo
+        if (arr.valoresIniciales() != null && !arr.valoresIniciales().isEmpty()
+                && arr.valoresIniciales().size() != arr.tamano()) {
+            errores.add(new ErrorSemantico(arr.linea(),
+                    "El arreglo '" + arr.nombre() + "' declara tamaño " + arr.tamano() +
+                            " pero recibe " + arr.valoresIniciales().size() + " valor(es) inicial(es)"));
+        }
     }
 
     private void validarDefinicionStruct(NodoSentencia.DefinicionStruct struct) {
